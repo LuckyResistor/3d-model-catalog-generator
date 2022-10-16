@@ -1,0 +1,106 @@
+% generated with model catalog generator.
+% Use KOMA-Script article class
+\documentclass[pdftex,a4paper,12pt,titlepage]{scrartcl}
+% packages
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[table]{xcolor}
+\usepackage[default]{sourcesanspro}
+\usepackage[margin=1cm]{geometry}
+\usepackage[hidelinks]{hyperref}
+\usepackage{multicol}
+\usepackage{graphicx}
+\usepackage{color}
+\usepackage{tabularx}
+\usepackage{mathptmx}
+\usepackage{fontsize}
+\usepackage{longtable}
+% Set defauilt font to helvetica too.
+\setcounter{tocdepth}{\subsectiontocdepth}
+\renewcommand{\familydefault}{\sfdefault}
+\renewcommand{\arraystretch}{1.5}
+\definecolor{row1}{gray}{0.95}
+\definecolor{row2}{gray}{0.9}
+% Title page.
+\title{Catalog}
+\subtitle{Model \VAR{ component_name|escape_latex }}
+\author{\href{https://luckyresistor.me}{Lucky Resistor – https://luckyresistor.me/}}
+\begin{document}
+\begin{titlepage}
+\begin{center}
+\vspace*{15mm}
+{\bfseries\fontsize{80}{90}\selectfont Catalog \par}
+\vspace*{5mm}
+{\bfseries\fontsize{60}{80}\selectfont Model \VAR{ component_name|escape_latex } \par}
+\vspace*{1cm}
+\includegraphics[width=\columnwidth]{\VAR{ title_image }}
+\vspace*{1mm}
+{\bfseries\fontsize{25}{30}\selectfont Lucky Resistor \\ \href{https://luckyresistor.me}{https://luckyresistor.me/}}
+\end{center}
+\end{titlepage}
+\tableofcontents
+
+\pagebreak
+\section{Print Recommendations}
+
+\begin{centering}
+\rowcolors{2}{row1}{row2}
+\large
+\begin{tabularx}{\columnwidth}{ l X }
+    \rowcolor{black!60}\textcolor{white}{\textbf{Parameter}} & \textcolor{white}{\textbf{Recommendation}} \\
+\BLOCK{ for r in recommendations }\textbf{\VAR{ r[0]|escape_latex }} & \VAR{ r[1]|escape_latex } \\
+\BLOCK{ endfor }
+\end{tabularx}
+\end{centering}
+
+\pagebreak
+\section{Models}\label{models}
+\BLOCK{ for model_group in model_groups }
+\BLOCK{ if not loop.first }\pagebreak\BLOCK{ endif }
+\subsection{\VAR{ model_group.title|escape_latex }}
+\begin{multicols}{2}
+\BLOCK{ for model in model_group.models }
+\subsubsection{\VAR{ model.part_id }}\hypertarget{\VAR{ model.part_id|escape_latex }}{}
+
+\begin{minipage}{\columnwidth}
+\footnotesize
+\includegraphics[width=\columnwidth]{\VAR{ model.image_files[0] }}
+
+\rowcolors{2}{row1}{row2}
+\begin{tabularx}{\columnwidth}{ l X }
+    \rowcolor{black!60}\textcolor{white}{\textbf{Parameter}} & \textcolor{white}{\textbf{Value}} \\
+\BLOCK{ for p in parameter }\textbf{\VAR{ p.title|escape_latex }} & \VAR{model.formatted_values[p.name]|escape_latex} \\
+\BLOCK{ endfor }
+\end{tabularx}
+\end{minipage}
+
+\vfill
+
+\BLOCK{ endfor }
+\end{multicols}
+\BLOCK{ endfor }
+
+\BLOCK{ for table_group in table_groups }
+\pagebreak
+\section{\VAR{ table_group.title|escape_latex }}
+
+\BLOCK{ if table_columns > 1 }\begin{multicols}{\VAR{ table_columns }}\BLOCK{ endif }
+\BLOCK{ for table in table_group.tables }
+\subsection{\VAR{ table.title|escape_latex }}
+
+\rowcolors{2}{row1}{row2}
+\begin{tabular}{ \BLOCK{ for _ in table.fields }l \BLOCK{ endfor } }
+\rowcolor{black!60}\BLOCK{ for title in table.fields }\textcolor{white}{\textbf{\VAR{ title|escape_latex }}} \BLOCK{ if loop.last }\\\BLOCK{ else }& \BLOCK{ endif }\BLOCK{ endfor }
+\BLOCK{ for row in table.rows }\hyperlink{\VAR{ row[0]|escape_latex }}{\textbf{\VAR{ row[0]|escape_latex }}} \BLOCK{ for value in row }\BLOCK{ if not loop.first }& \VAR{ value|escape_latex } \BLOCK{ endif }\BLOCK{ endfor }\\
+\BLOCK{ endfor }
+\end{tabular}
+
+\vfill
+
+\BLOCK{ endfor }
+\BLOCK{ if table_columns > 1 }\end{multicols}\BLOCK{ endif }
+\BLOCK{ endfor }
+
+\end{document}
+
+

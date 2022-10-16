@@ -1,0 +1,652 @@
+{
+    "component_name": "LR2264",
+    "parameter": [
+        {
+            "title": "Depth",
+            "name": "depth",
+            "unit": "mm"
+        },
+        {
+            "title": "Width",
+            "name": "width",
+            "unit": "mm"
+        },
+        {
+            "title": "Rim Height",
+            "name": "visible_rim_height",
+            "unit": "mm"
+        }
+    ],
+    "models": [
+        {
+            "model_files": ["LR2264/R07/LR2264-052x052-R07.3mf"],
+            "image_files": ["LR2264/R07/LR2264-052x052-R07.png"],
+            "part_id": "LR2264-052x052-R07",
+            "parameters": {
+                "depth": "52",
+                "visible_rim_height": "7",
+                "width": "52"
+            }
+        },
+        {
+            "model_files": ["LR2264/R14/LR2264-052x052-R14.3mf"],
+            "image_files": ["LR2264/R14/LR2264-052x052-R14.png"],
+            "part_id": "LR2264-052x052-R14",
+            "parameters": {
+                "depth": "52",
+                "visible_rim_height": "14",
+                "width": "52"
+            }
+        },
+        {
+            "model_files": ["LR2264/R21/LR2264-052x052-R21.3mf"],
+            "image_files": ["LR2264/R21/LR2264-052x052-R21.png"],
+            "part_id": "LR2264-052x052-R21",
+            "parameters": {
+                "depth": "52",
+                "visible_rim_height": "21",
+                "width": "52"
+            }
+        },
+        {
+            "model_files": ["LR2264/R07/LR2264-062x052-R07.3mf"],
+            "image_files": ["LR2264/R07/LR2264-062x052-R07.png"],
+            "part_id": "LR2264-062x052-R07",
+            "parameters": {
+                "depth": "52",
+                "visible_rim_height": "7",
+                "width": "62"
+            }
+        },
+        {
+            "model_files": ["LR2264/R14/LR2264-062x052-R14.3mf"],
+            "image_files": ["LR2264/R14/LR2264-062x052-R14.png"],
+            "part_id": "LR2264-062x052-R14",
+            "parameters": {
+                "depth": "52",
+                "visible_rim_height": "14",
+                "width": "62"
+            }
+        },
+        {
+            "model_files": ["LR2264/R21/LR2264-062x052-R21.3mf"],
+            "image_files": ["LR2264/R21/LR2264-062x052-R21.png"],
+            "part_id": "LR2264-062x052-R21",
+            "parameters": {
+                "depth": "52",
+                "visible_rim_height": "21",
+                "width": "62"
+            }
+        },
+        {
+            "model_files": ["LR2264/R07/LR2264-082x052-R07.3mf"],
+            "image_files": ["LR2264/R07/LR2264-082x052-R07.png"],
+            "part_id": "LR2264-082x052-R07",
+            "parameters": {
+                "depth": "52",
+                "visible_rim_height": "7",
+                "width": "82"
+            }
+        },
+        {
+            "model_files": ["LR2264/R14/LR2264-082x052-R14.3mf"],
+            "image_files": ["LR2264/R14/LR2264-082x052-R14.png"],
+            "part_id": "LR2264-082x052-R14",
+            "parameters": {
+                "depth": "52",
+                "visible_rim_height": "14",
+                "width": "82"
+            }
+        },
+        {
+            "model_files": ["LR2264/R21/LR2264-082x052-R21.3mf"],
+            "image_files": ["LR2264/R21/LR2264-082x052-R21.png"],
+            "part_id": "LR2264-082x052-R21",
+            "parameters": {
+                "depth": "52",
+                "visible_rim_height": "21",
+                "width": "82"
+            }
+        },
+        {
+            "model_files": ["LR2264/R07/LR2264-102x052-R07.3mf"],
+            "image_files": ["LR2264/R07/LR2264-102x052-R07.png"],
+            "part_id": "LR2264-102x052-R07",
+            "parameters": {
+                "depth": "52",
+                "visible_rim_height": "7",
+                "width": "102"
+            }
+        },
+        {
+            "model_files": ["LR2264/R14/LR2264-102x052-R14.3mf"],
+            "image_files": ["LR2264/R14/LR2264-102x052-R14.png"],
+            "part_id": "LR2264-102x052-R14",
+            "parameters": {
+                "depth": "52",
+                "visible_rim_height": "14",
+                "width": "102"
+            }
+        },
+        {
+            "model_files": ["LR2264/R21/LR2264-102x052-R21.3mf"],
+            "image_files": ["LR2264/R21/LR2264-102x052-R21.png"],
+            "part_id": "LR2264-102x052-R21",
+            "parameters": {
+                "depth": "52",
+                "visible_rim_height": "21",
+                "width": "102"
+            }
+        },
+        {
+            "model_files": ["LR2264/R07/LR2264-122x052-R07.3mf"],
+            "image_files": ["LR2264/R07/LR2264-122x052-R07.png"],
+            "part_id": "LR2264-122x052-R07",
+            "parameters": {
+                "depth": "52",
+                "visible_rim_height": "7",
+                "width": "122"
+            }
+        },
+        {
+            "model_files": ["LR2264/R14/LR2264-122x052-R14.3mf"],
+            "image_files": ["LR2264/R14/LR2264-122x052-R14.png"],
+            "part_id": "LR2264-122x052-R14",
+            "parameters": {
+                "depth": "52",
+                "visible_rim_height": "14",
+                "width": "122"
+            }
+        },
+        {
+            "model_files": ["LR2264/R21/LR2264-122x052-R21.3mf"],
+            "image_files": ["LR2264/R21/LR2264-122x052-R21.png"],
+            "part_id": "LR2264-122x052-R21",
+            "parameters": {
+                "depth": "52",
+                "visible_rim_height": "21",
+                "width": "122"
+            }
+        },
+        {
+            "model_files": ["LR2264/R07/LR2264-152x052-R07.3mf"],
+            "image_files": ["LR2264/R07/LR2264-152x052-R07.png"],
+            "part_id": "LR2264-152x052-R07",
+            "parameters": {
+                "depth": "52",
+                "visible_rim_height": "7",
+                "width": "152"
+            }
+        },
+        {
+            "model_files": ["LR2264/R14/LR2264-152x052-R14.3mf"],
+            "image_files": ["LR2264/R14/LR2264-152x052-R14.png"],
+            "part_id": "LR2264-152x052-R14",
+            "parameters": {
+                "depth": "52",
+                "visible_rim_height": "14",
+                "width": "152"
+            }
+        },
+        {
+            "model_files": ["LR2264/R21/LR2264-152x052-R21.3mf"],
+            "image_files": ["LR2264/R21/LR2264-152x052-R21.png"],
+            "part_id": "LR2264-152x052-R21",
+            "parameters": {
+                "depth": "52",
+                "visible_rim_height": "21",
+                "width": "152"
+            }
+        },
+        {
+            "model_files": ["LR2264/R07/LR2264-062x062-R07.3mf"],
+            "image_files": ["LR2264/R07/LR2264-062x062-R07.png"],
+            "part_id": "LR2264-062x062-R07",
+            "parameters": {
+                "depth": "62",
+                "visible_rim_height": "7",
+                "width": "62"
+            }
+        },
+        {
+            "model_files": ["LR2264/R14/LR2264-062x062-R14.3mf"],
+            "image_files": ["LR2264/R14/LR2264-062x062-R14.png"],
+            "part_id": "LR2264-062x062-R14",
+            "parameters": {
+                "depth": "62",
+                "visible_rim_height": "14",
+                "width": "62"
+            }
+        },
+        {
+            "model_files": ["LR2264/R21/LR2264-062x062-R21.3mf"],
+            "image_files": ["LR2264/R21/LR2264-062x062-R21.png"],
+            "part_id": "LR2264-062x062-R21",
+            "parameters": {
+                "depth": "62",
+                "visible_rim_height": "21",
+                "width": "62"
+            }
+        },
+        {
+            "model_files": ["LR2264/R07/LR2264-082x062-R07.3mf"],
+            "image_files": ["LR2264/R07/LR2264-082x062-R07.png"],
+            "part_id": "LR2264-082x062-R07",
+            "parameters": {
+                "depth": "62",
+                "visible_rim_height": "7",
+                "width": "82"
+            }
+        },
+        {
+            "model_files": ["LR2264/R14/LR2264-082x062-R14.3mf"],
+            "image_files": ["LR2264/R14/LR2264-082x062-R14.png"],
+            "part_id": "LR2264-082x062-R14",
+            "parameters": {
+                "depth": "62",
+                "visible_rim_height": "14",
+                "width": "82"
+            }
+        },
+        {
+            "model_files": ["LR2264/R21/LR2264-082x062-R21.3mf"],
+            "image_files": ["LR2264/R21/LR2264-082x062-R21.png"],
+            "part_id": "LR2264-082x062-R21",
+            "parameters": {
+                "depth": "62",
+                "visible_rim_height": "21",
+                "width": "82"
+            }
+        },
+        {
+            "model_files": ["LR2264/R07/LR2264-102x062-R07.3mf"],
+            "image_files": ["LR2264/R07/LR2264-102x062-R07.png"],
+            "part_id": "LR2264-102x062-R07",
+            "parameters": {
+                "depth": "62",
+                "visible_rim_height": "7",
+                "width": "102"
+            }
+        },
+        {
+            "model_files": ["LR2264/R14/LR2264-102x062-R14.3mf"],
+            "image_files": ["LR2264/R14/LR2264-102x062-R14.png"],
+            "part_id": "LR2264-102x062-R14",
+            "parameters": {
+                "depth": "62",
+                "visible_rim_height": "14",
+                "width": "102"
+            }
+        },
+        {
+            "model_files": ["LR2264/R21/LR2264-102x062-R21.3mf"],
+            "image_files": ["LR2264/R21/LR2264-102x062-R21.png"],
+            "part_id": "LR2264-102x062-R21",
+            "parameters": {
+                "depth": "62",
+                "visible_rim_height": "21",
+                "width": "102"
+            }
+        },
+        {
+            "model_files": ["LR2264/R07/LR2264-122x062-R07.3mf"],
+            "image_files": ["LR2264/R07/LR2264-122x062-R07.png"],
+            "part_id": "LR2264-122x062-R07",
+            "parameters": {
+                "depth": "62",
+                "visible_rim_height": "7",
+                "width": "122"
+            }
+        },
+        {
+            "model_files": ["LR2264/R14/LR2264-122x062-R14.3mf"],
+            "image_files": ["LR2264/R14/LR2264-122x062-R14.png"],
+            "part_id": "LR2264-122x062-R14",
+            "parameters": {
+                "depth": "62",
+                "visible_rim_height": "14",
+                "width": "122"
+            }
+        },
+        {
+            "model_files": ["LR2264/R21/LR2264-122x062-R21.3mf"],
+            "image_files": ["LR2264/R21/LR2264-122x062-R21.png"],
+            "part_id": "LR2264-122x062-R21",
+            "parameters": {
+                "depth": "62",
+                "visible_rim_height": "21",
+                "width": "122"
+            }
+        },
+        {
+            "model_files": ["LR2264/R07/LR2264-152x062-R07.3mf"],
+            "image_files": ["LR2264/R07/LR2264-152x062-R07.png"],
+            "part_id": "LR2264-152x062-R07",
+            "parameters": {
+                "depth": "62",
+                "visible_rim_height": "7",
+                "width": "152"
+            }
+        },
+        {
+            "model_files": ["LR2264/R14/LR2264-152x062-R14.3mf"],
+            "image_files": ["LR2264/R14/LR2264-152x062-R14.png"],
+            "part_id": "LR2264-152x062-R14",
+            "parameters": {
+                "depth": "62",
+                "visible_rim_height": "14",
+                "width": "152"
+            }
+        },
+        {
+            "model_files": ["LR2264/R21/LR2264-152x062-R21.3mf"],
+            "image_files": ["LR2264/R21/LR2264-152x062-R21.png"],
+            "part_id": "LR2264-152x062-R21",
+            "parameters": {
+                "depth": "62",
+                "visible_rim_height": "21",
+                "width": "152"
+            }
+        },
+        {
+            "model_files": ["LR2264/R07/LR2264-082x082-R07.3mf"],
+            "image_files": ["LR2264/R07/LR2264-082x082-R07.png"],
+            "part_id": "LR2264-082x082-R07",
+            "parameters": {
+                "depth": "82",
+                "visible_rim_height": "7",
+                "width": "82"
+            }
+        },
+        {
+            "model_files": ["LR2264/R14/LR2264-082x082-R14.3mf"],
+            "image_files": ["LR2264/R14/LR2264-082x082-R14.png"],
+            "part_id": "LR2264-082x082-R14",
+            "parameters": {
+                "depth": "82",
+                "visible_rim_height": "14",
+                "width": "82"
+            }
+        },
+        {
+            "model_files": ["LR2264/R21/LR2264-082x082-R21.3mf"],
+            "image_files": ["LR2264/R21/LR2264-082x082-R21.png"],
+            "part_id": "LR2264-082x082-R21",
+            "parameters": {
+                "depth": "82",
+                "visible_rim_height": "21",
+                "width": "82"
+            }
+        },
+        {
+            "model_files": ["LR2264/R07/LR2264-102x082-R07.3mf"],
+            "image_files": ["LR2264/R07/LR2264-102x082-R07.png"],
+            "part_id": "LR2264-102x082-R07",
+            "parameters": {
+                "depth": "82",
+                "visible_rim_height": "7",
+                "width": "102"
+            }
+        },
+        {
+            "model_files": ["LR2264/R14/LR2264-102x082-R14.3mf"],
+            "image_files": ["LR2264/R14/LR2264-102x082-R14.png"],
+            "part_id": "LR2264-102x082-R14",
+            "parameters": {
+                "depth": "82",
+                "visible_rim_height": "14",
+                "width": "102"
+            }
+        },
+        {
+            "model_files": ["LR2264/R21/LR2264-102x082-R21.3mf"],
+            "image_files": ["LR2264/R21/LR2264-102x082-R21.png"],
+            "part_id": "LR2264-102x082-R21",
+            "parameters": {
+                "depth": "82",
+                "visible_rim_height": "21",
+                "width": "102"
+            }
+        },
+        {
+            "model_files": ["LR2264/R07/LR2264-122x082-R07.3mf"],
+            "image_files": ["LR2264/R07/LR2264-122x082-R07.png"],
+            "part_id": "LR2264-122x082-R07",
+            "parameters": {
+                "depth": "82",
+                "visible_rim_height": "7",
+                "width": "122"
+            }
+        },
+        {
+            "model_files": ["LR2264/R14/LR2264-122x082-R14.3mf"],
+            "image_files": ["LR2264/R14/LR2264-122x082-R14.png"],
+            "part_id": "LR2264-122x082-R14",
+            "parameters": {
+                "depth": "82",
+                "visible_rim_height": "14",
+                "width": "122"
+            }
+        },
+        {
+            "model_files": ["LR2264/R21/LR2264-122x082-R21.3mf"],
+            "image_files": ["LR2264/R21/LR2264-122x082-R21.png"],
+            "part_id": "LR2264-122x082-R21",
+            "parameters": {
+                "depth": "82",
+                "visible_rim_height": "21",
+                "width": "122"
+            }
+        },
+        {
+            "model_files": ["LR2264/R07/LR2264-152x082-R07.3mf"],
+            "image_files": ["LR2264/R07/LR2264-152x082-R07.png"],
+            "part_id": "LR2264-152x082-R07",
+            "parameters": {
+                "depth": "82",
+                "visible_rim_height": "7",
+                "width": "152"
+            }
+        },
+        {
+            "model_files": ["LR2264/R14/LR2264-152x082-R14.3mf"],
+            "image_files": ["LR2264/R14/LR2264-152x082-R14.png"],
+            "part_id": "LR2264-152x082-R14",
+            "parameters": {
+                "depth": "82",
+                "visible_rim_height": "14",
+                "width": "152"
+            }
+        },
+        {
+            "model_files": ["LR2264/R21/LR2264-152x082-R21.3mf"],
+            "image_files": ["LR2264/R21/LR2264-152x082-R21.png"],
+            "part_id": "LR2264-152x082-R21",
+            "parameters": {
+                "depth": "82",
+                "visible_rim_height": "21",
+                "width": "152"
+            }
+        },
+        {
+            "model_files": ["LR2264/R07/LR2264-102x102-R07.3mf"],
+            "image_files": ["LR2264/R07/LR2264-102x102-R07.png"],
+            "part_id": "LR2264-102x102-R07",
+            "parameters": {
+                "depth": "102",
+                "visible_rim_height": "7",
+                "width": "102"
+            }
+        },
+        {
+            "model_files": ["LR2264/R14/LR2264-102x102-R14.3mf"],
+            "image_files": ["LR2264/R14/LR2264-102x102-R14.png"],
+            "part_id": "LR2264-102x102-R14",
+            "parameters": {
+                "depth": "102",
+                "visible_rim_height": "14",
+                "width": "102"
+            }
+        },
+        {
+            "model_files": ["LR2264/R21/LR2264-102x102-R21.3mf"],
+            "image_files": ["LR2264/R21/LR2264-102x102-R21.png"],
+            "part_id": "LR2264-102x102-R21",
+            "parameters": {
+                "depth": "102",
+                "visible_rim_height": "21",
+                "width": "102"
+            }
+        },
+        {
+            "model_files": ["LR2264/R07/LR2264-122x102-R07.3mf"],
+            "image_files": ["LR2264/R07/LR2264-122x102-R07.png"],
+            "part_id": "LR2264-122x102-R07",
+            "parameters": {
+                "depth": "102",
+                "visible_rim_height": "7",
+                "width": "122"
+            }
+        },
+        {
+            "model_files": ["LR2264/R14/LR2264-122x102-R14.3mf"],
+            "image_files": ["LR2264/R14/LR2264-122x102-R14.png"],
+            "part_id": "LR2264-122x102-R14",
+            "parameters": {
+                "depth": "102",
+                "visible_rim_height": "14",
+                "width": "122"
+            }
+        },
+        {
+            "model_files": ["LR2264/R21/LR2264-122x102-R21.3mf"],
+            "image_files": ["LR2264/R21/LR2264-122x102-R21.png"],
+            "part_id": "LR2264-122x102-R21",
+            "parameters": {
+                "depth": "102",
+                "visible_rim_height": "21",
+                "width": "122"
+            }
+        },
+        {
+            "model_files": ["LR2264/R07/LR2264-152x102-R07.3mf"],
+            "image_files": ["LR2264/R07/LR2264-152x102-R07.png"],
+            "part_id": "LR2264-152x102-R07",
+            "parameters": {
+                "depth": "102",
+                "visible_rim_height": "7",
+                "width": "152"
+            }
+        },
+        {
+            "model_files": ["LR2264/R14/LR2264-152x102-R14.3mf"],
+            "image_files": ["LR2264/R14/LR2264-152x102-R14.png"],
+            "part_id": "LR2264-152x102-R14",
+            "parameters": {
+                "depth": "102",
+                "visible_rim_height": "14",
+                "width": "152"
+            }
+        },
+        {
+            "model_files": ["LR2264/R21/LR2264-152x102-R21.3mf"],
+            "image_files": ["LR2264/R21/LR2264-152x102-R21.png"],
+            "part_id": "LR2264-152x102-R21",
+            "parameters": {
+                "depth": "102",
+                "visible_rim_height": "21",
+                "width": "152"
+            }
+        },
+        {
+            "model_files": ["LR2264/R07/LR2264-122x122-R07.3mf"],
+            "image_files": ["LR2264/R07/LR2264-122x122-R07.png"],
+            "part_id": "LR2264-122x122-R07",
+            "parameters": {
+                "depth": "122",
+                "visible_rim_height": "7",
+                "width": "122"
+            }
+        },
+        {
+            "model_files": ["LR2264/R14/LR2264-122x122-R14.3mf"],
+            "image_files": ["LR2264/R14/LR2264-122x122-R14.png"],
+            "part_id": "LR2264-122x122-R14",
+            "parameters": {
+                "depth": "122",
+                "visible_rim_height": "14",
+                "width": "122"
+            }
+        },
+        {
+            "model_files": ["LR2264/R21/LR2264-122x122-R21.3mf"],
+            "image_files": ["LR2264/R21/LR2264-122x122-R21.png"],
+            "part_id": "LR2264-122x122-R21",
+            "parameters": {
+                "depth": "122",
+                "visible_rim_height": "21",
+                "width": "122"
+            }
+        },
+        {
+            "model_files": ["LR2264/R07/LR2264-152x122-R07.3mf"],
+            "image_files": ["LR2264/R07/LR2264-152x122-R07.png"],
+            "part_id": "LR2264-152x122-R07",
+            "parameters": {
+                "depth": "122",
+                "visible_rim_height": "7",
+                "width": "152"
+            }
+        },
+        {
+            "model_files": ["LR2264/R14/LR2264-152x122-R14.3mf"],
+            "image_files": ["LR2264/R14/LR2264-152x122-R14.png"],
+            "part_id": "LR2264-152x122-R14",
+            "parameters": {
+                "depth": "122",
+                "visible_rim_height": "14",
+                "width": "152"
+            }
+        },
+        {
+            "model_files": ["LR2264/R21/LR2264-152x122-R21.3mf"],
+            "image_files": ["LR2264/R21/LR2264-152x122-R21.png"],
+            "part_id": "LR2264-152x122-R21",
+            "parameters": {
+                "depth": "122",
+                "visible_rim_height": "21",
+                "width": "152"
+            }
+        },
+        {
+            "model_files": ["LR2264/R07/LR2264-152x152-R07.3mf"],
+            "image_files": ["LR2264/R07/LR2264-152x152-R07.png"],
+            "part_id": "LR2264-152x152-R07",
+            "parameters": {
+                "depth": "152",
+                "visible_rim_height": "7",
+                "width": "152"
+            }
+        },
+        {
+            "model_files": ["LR2264/R14/LR2264-152x152-R14.3mf"],
+            "image_files": ["LR2264/R14/LR2264-152x152-R14.png"],
+            "part_id": "LR2264-152x152-R14",
+            "parameters": {
+                "depth": "152",
+                "visible_rim_height": "14",
+                "width": "152"
+            }
+        },
+        {
+            "model_files": ["LR2264/R21/LR2264-152x152-R21.3mf"],
+            "image_files": ["LR2264/R21/LR2264-152x152-R21.png"],
+            "part_id": "LR2264-152x152-R21",
+            "parameters": {
+                "depth": "152",
+                "visible_rim_height": "21",
+                "width": "152"
+            }
+        }
+    ]
+}
