@@ -4,6 +4,7 @@ Generate a PDF catalog from a model file collection using LaTeX.
 """
 import argparse
 import configparser
+import itertools
 import json
 import logging
 import re
@@ -267,15 +268,21 @@ class WorkingSet:
         self.parameter_order = str(config['main']['parameter_order']).split()
         if 'primary_group' not in config['main']:
             raise ScriptError('Missing value "primary_group" in section "main" of "config.ini"')
-        self.primary_group = str(config['main']['primary_group'])
+        self.primary_group = str(config['main']['primary_group']).split()
         if 'title_image' not in config['main']:
             raise ScriptError('Missing value "title_image" in section "main" of "config.ini"')
         self.title_image = config["main"]["title_image"]
         if 'table_columns' not in config['main']:
             raise ScriptError('Missing value "table_columns" in section "main" of "config.ini"')
         self.table_columns = int(config["main"]["table_columns"])
+        if 'derived_parameters' in config['main']:
+            derived_parameters: list[str] = config['main']['derived_parameters'].split()
+        else:
+            derived_parameters: list[str] = []
         if not self.title_image.endswith('.jpg'):
             self.title_image = self.image_files[f'{self.title_image}.jpg']
+        else:
+            self.title_image = self.project_dir / self.title_image
         for parameter_name in self.parameter_order:
             parameter: Parameter
             if parameter_name in self.data.parameter:
@@ -297,6 +304,8 @@ class WorkingSet:
                                   'also not deined in section "derived" in "config.ini".')
             if parameter_name in config['format']:
                 parameter.format_expression = str(config['format'][parameter_name]).strip()
+            if parameter_name in derived_parameters:
+                parameter.is_derived = True
             self.parameter.append(parameter)
         for name, title in self.RECOMMENDATIONS:
             if name in config['recommendations']:
@@ -311,7 +320,7 @@ class WorkingSet:
             formatted_values: dict[str, str] = {}
             # first pre-process all original values.
             for parameter in self.parameter:
-                if parameter.is_derived:
+                if parameter.is_derived and parameter.derived_expression:
                     continue
                 value = model.original_values[parameter.name]
                 if '.' in value:
@@ -320,7 +329,7 @@ class WorkingSet:
                     value = int(value)
                 values[parameter.name] = value
             for parameter in self.parameter:
-                if parameter.is_derived:
+                if parameter.is_derived and parameter.derived_expression:
                     value = eval(parameter.derived_expression, {'values': values})
                     values[parameter.name] = value
                 else:
@@ -352,15 +361,39 @@ class WorkingSet:
             self.value_sets[parameter.name] = \
                 list([(v, parameter.format_value(v)) for v in sorted(list(value_sets[parameter.name]))])
         # Create the main model groups
-        primary_group_parameter = self.parameter_map[self.primary_group]
-        for g_value, g_formatted in self.value_sets[self.primary_group]:
-            title = f'Models with {primary_group_parameter.title} = {g_formatted}'
-            models = [m for m in self.sorted_models if m.values[self.primary_group] == g_value]
-            self.model_groups.append(ModelGroup(title, models))
+        primary_group_parameters: list[Parameter] = list([self.parameter_map[g] for g in self.primary_group])
+        if len(self.primary_group) == 1:
+            primary_group_parameter = primary_group_parameters[0]
+            for g_value, g_formatted in self.value_sets[primary_group_parameter.name]:
+                title = f'Models with {primary_group_parameter.title} = {g_formatted}'
+                models = [m for m in self.sorted_models if m.values[self.primary_group] == g_value]
+                self.model_groups.append(ModelGroup(title, models))
+        elif len(self.primary_group) == 2:
+            combinations = itertools.product(self.value_sets[primary_group_parameters[0].name],
+                                             self.value_sets[primary_group_parameters[1].name])
+            for c in combinations:
+                title = 'Models with'
+                models: list[Model] = []
+                for i in range(len(primary_group_parameters)):
+                    title += f' {primary_group_parameters[i].title} = {c[i][1]}'
+                for m in self.sorted_models:
+                    matches = True
+                    for i in range(len(primary_group_parameters)):
+                        if c[i][0] != m.values[primary_group_parameters[i].name]:
+                            matches = False
+                            break
+                    if not matches:
+                        continue
+                    models.append(m)
+                self.model_groups.append(ModelGroup(title, models))
+        else:
+            raise ValueError('Not more than two parameters supported for primary group.')
         # Create tables to find certain parameters
         for parameter in self.parameter:
             if len(self.value_sets[parameter.name]) < 2:
                 continue  # Skip parameters with only one value.
+            if parameter.is_derived:
+                continue  # Skip derived parameter.
             title = f'Tables Grouped by {parameter.title}'
             tables: list[Table] = []
             for g_value, g_formatted in self.value_sets[parameter.name]:

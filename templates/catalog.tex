@@ -15,6 +15,7 @@
 \usepackage{mathptmx}
 \usepackage{fontsize}
 \usepackage{longtable}
+\usepackage{needspace}
 % Set defauilt font to helvetica too.
 \setcounter{tocdepth}{\subsectiontocdepth}
 \renewcommand{\familydefault}{\sfdefault}
@@ -86,16 +87,15 @@
 
 \BLOCK{ if table_columns > 1 }\begin{multicols}{\VAR{ table_columns }}\BLOCK{ endif }
 \BLOCK{ for table in table_group.tables }
-\subsection{\VAR{ table.title|escape_latex }}
 
+\Needspace{5\baselineskip}
+\subsection{\VAR{ table.title|escape_latex }}
 \rowcolors{2}{row1}{row2}
-\begin{tabular}{ \BLOCK{ for _ in table.fields }l \BLOCK{ endfor } }
-\rowcolor{black!60}\BLOCK{ for title in table.fields }\textcolor{white}{\textbf{\VAR{ title|escape_latex }}} \BLOCK{ if loop.last }\\\BLOCK{ else }& \BLOCK{ endif }\BLOCK{ endfor }
+\begin{longtable}{ \BLOCK{ for _ in table.fields }l \BLOCK{ endfor } }
+\rowcolor{black!60}\BLOCK{ for title in table.fields }\textcolor{white}{\textbf{\VAR{ title|escape_latex }}} \BLOCK{ if loop.last }\endhead\BLOCK{ else }& \BLOCK{ endif }\BLOCK{ endfor }
 \BLOCK{ for row in table.rows }\hyperlink{\VAR{ row[0]|escape_latex }}{\textbf{\VAR{ row[0]|escape_latex }}} \BLOCK{ for value in row }\BLOCK{ if not loop.first }& \VAR{ value|escape_latex } \BLOCK{ endif }\BLOCK{ endfor }\\
 \BLOCK{ endfor }
-\end{tabular}
-
-\vfill
+\end{longtable}
 
 \BLOCK{ endfor }
 \BLOCK{ if table_columns > 1 }\end{multicols}\BLOCK{ endif }
