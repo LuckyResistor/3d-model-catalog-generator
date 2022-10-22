@@ -14,7 +14,7 @@
 \usepackage{tabularx}
 \usepackage{mathptmx}
 \usepackage{fontsize}
-\usepackage{longtable}
+\usepackage{supertabular}
 \usepackage{needspace}
 % Set defauilt font to helvetica too.
 \setcounter{tocdepth}{\subsectiontocdepth}
@@ -24,7 +24,7 @@
 \definecolor{row2}{gray}{0.9}
 % Title page.
 \title{Catalog}
-\subtitle{Model \VAR{ component_name|escape_latex }}
+\subtitle{Model \VAR{ title|escape_latex }}
 \author{\href{https://luckyresistor.me}{Lucky Resistor – https://luckyresistor.me/}}
 \begin{document}
 \begin{titlepage}
@@ -32,7 +32,7 @@
 \vspace*{15mm}
 {\bfseries\fontsize{80}{90}\selectfont Catalog \par}
 \vspace*{5mm}
-{\bfseries\fontsize{60}{80}\selectfont Model \VAR{ component_name|escape_latex } \par}
+{\bfseries\fontsize{60}{80}\selectfont Model \VAR{ title|escape_latex } \par}
 \vspace*{1cm}
 \includegraphics[width=\columnwidth]{\VAR{ title_image }}
 \vspace*{1mm}
@@ -90,12 +90,12 @@
 
 \Needspace{5\baselineskip}
 \subsection{\VAR{ table.title|escape_latex }}
+\tablehead{ \rowcolor{black!60}\BLOCK{ for title in table.fields }\textcolor{white}{\textbf{\VAR{ title|escape_latex }}} \BLOCK{ if loop.last }\\ \BLOCK{ else }& \BLOCK{ endif }\BLOCK{ endfor } }
 \rowcolors{2}{row1}{row2}
-\begin{longtable}{ \BLOCK{ for _ in table.fields }l \BLOCK{ endfor } }
-\rowcolor{black!60}\BLOCK{ for title in table.fields }\textcolor{white}{\textbf{\VAR{ title|escape_latex }}} \BLOCK{ if loop.last }\endhead\BLOCK{ else }& \BLOCK{ endif }\BLOCK{ endfor }
+\begin{supertabular}{ \BLOCK{ for _ in table.fields }l \BLOCK{ endfor } }
 \BLOCK{ for row in table.rows }\hyperlink{\VAR{ row[0]|escape_latex }}{\textbf{\VAR{ row[0]|escape_latex }}} \BLOCK{ for value in row }\BLOCK{ if not loop.first }& \VAR{ value|escape_latex } \BLOCK{ endif }\BLOCK{ endfor }\\
 \BLOCK{ endfor }
-\end{longtable}
+\end{supertabular}
 
 \BLOCK{ endfor }
 \BLOCK{ if table_columns > 1 }\end{multicols}\BLOCK{ endif }

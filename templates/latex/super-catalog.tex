@@ -1,0 +1,72 @@
+% generated with model catalog generator.
+% Use KOMA-Script book class for super catalog.
+\documentclass[pdftex,a4paper,12pt,titlepage]{scrbook}
+% packages
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{scrlayer-scrpage}
+\usepackage[table]{xcolor}
+\usepackage[default]{sourcesanspro}
+\usepackage[left=1.5cm,right=1cm,top=1.5cm,bottom=2.5cm]{geometry}
+\usepackage[hidelinks]{hyperref}
+\usepackage{multicol}
+\usepackage{graphicx}
+\usepackage{color}
+\usepackage{tabularx}
+\usepackage{mathptmx}
+\usepackage{fontsize}
+\usepackage{supertabular}
+\usepackage{needspace}
+% Set defauilt font to helvetica too.
+\cehead*{\VAR{ title|escape_latex }}
+\cohead*{\VAR{ title|escape_latex }}
+\cefoot*{Lucky Resistor – https://luckyresistor.me/}
+\cofoot*{Lucky Resistor – https://luckyresistor.me/}
+\lefoot*{\pagemark}
+\rofoot*{\pagemark}
+\pagestyle{scrheadings}
+\pagenumbering{arabic}
+\setcounter{tocdepth}{\subsectiontocdepth}
+\renewcommand{\familydefault}{\sfdefault}
+\renewcommand{\arraystretch}{1.5}
+\definecolor{row1}{gray}{0.95}
+\definecolor{row2}{gray}{0.9}
+% Title page.
+\title{Catalog}
+\subtitle{\VAR{ title|escape_latex }}
+\author{\href{https://luckyresistor.me}{Lucky Resistor – https://luckyresistor.me/}}
+\begin{document}
+\begin{titlepage}
+\begin{center}
+\vspace*{15mm}
+{\bfseries\fontsize{80}{90}\selectfont Catalog \par}
+\vspace*{5mm}
+{\bfseries\fontsize{60}{80}\selectfont \VAR{ title|escape_latex } \par}
+\vspace*{1cm}
+\includegraphics[width=\columnwidth]{\VAR{ title_image }}
+\vspace*{1mm}
+{\bfseries\fontsize{25}{30}\selectfont Lucky Resistor \\ \href{https://luckyresistor.me}{https://luckyresistor.me/}}
+\end{center}
+\end{titlepage}
+
+\tableofcontents
+
+\chapter{Overview}
+
+\begin{multicols}{2}
+\BLOCK{for sub_project in sub_projects}
+\begin{minipage}{\columnwidth}
+\hyperlink{\VAR{sub_project.name}}{\includegraphics[width=\columnwidth]{\VAR{sub_project.title_image}}}\newline
+\hyperlink{\VAR{sub_project.name}}{\textbf{\VAR{sub_project.title}}}\newline
+\hyperlink{\VAR{sub_project.name}}{\VAR{sub_project.name}}
+\end{minipage}\par
+
+\BLOCK{endfor}
+\end{multicols}
+
+\BLOCK{ for chapter in chapters }
+\include{\VAR{ chapter }}
+\BLOCK{ endfor }
+
+\end{document}
+
