@@ -7,46 +7,22 @@ import configparser
 import itertools
 import json
 import logging
-import re
+import shutil
 import subprocess
-from operator import attrgetter, itemgetter
+from operator import itemgetter
 from pathlib import Path
 from typing import Optional, Union
-from jinja2 import Environment, FileSystemLoader, select_autoescape
+from jinja2 import Environment, FileSystemLoader
 
-
-RE_LATEX_ESCAPE = [
-    (re.compile(r'\\'), r'\\textbackslash'),
-    (re.compile(r'([{}_#%&$])'), r'\\\1'),
-    (re.compile(r'~'), r'\~{}'),
-    (re.compile(r'\^'), r'\^{}'),
-    (re.compile(r'"'), r"''"),
-    (re.compile(r'\.\.\.+'), r'\\ldots'),
-    (re.compile(r'/'), r'\/')
-]
-
-
-def escape_latex(value: str) -> str:
-    """
-    Escape text for latex.
-
-    :param value: The original text
-    :return: The escaped text.
-    """
-    for regexp, replacement in RE_LATEX_ESCAPE:
-        value = regexp.sub(replacement, value)
-    return value
-
-
-class ScriptError(Exception):
-    pass
+from lib.model import Model
+from lib.exceptions import ScriptError
+from lib.latex import escape_latex, write_latex_template, create_pdf_from_latex
 
 
 class Parameter:
     """
     A parameter that defines a model.
     """
-
 
     def __init__(self, title: str, name: str, unit: str):
         """
@@ -72,21 +48,6 @@ class Parameter:
             else:
                 formatted_value = f'{value} {self.unit}'
         return formatted_value
-
-
-class Model:
-    """
-    A single model entry.
-    """
-
-    def __init__(self, json_data):
-        self.model_files = json_data['model_files']
-        self.image_files = json_data['image_files']
-        self.part_id = json_data['part_id']
-        self.original_values: dict[str, str] = json_data['parameters']
-
-        self.values: dict[str, Union[int, float]] = {}
-        self.formatted_values: dict[str, str] = {}
 
 
 class ModelGroup:
@@ -123,17 +84,17 @@ class Data:
     """
     The data read from the CSV file.
     """
-    def __init__(self, json_data):
+    def __init__(self, json_data, project_dir: Path):
         self.component_name = json_data['component_name']
         self.parameter: dict[str, Parameter] = {}
         for p in json_data['parameter']:
             self.parameter[p['name']] = Parameter(p['title'], p['name'], p['unit'])
         self.models: list[Model] = []
         for p in json_data['models']:
-            self.models.append(Model(p))
+            self.models.append(Model.from_json(p, project_dir))
 
 
-class WorkingSet:
+class CatalogWorkingSet:
     """
     The working set for this script.
     """
@@ -147,6 +108,8 @@ class WorkingSet:
         ('extras', 'Extra Options')
     ]
 
+    CATALOG_NAME = 'catalog'
+
     def __init__(self):
         """
         Create a new working set.
@@ -158,8 +121,12 @@ class WorkingSet:
         self.image_files: dict[str, Path] = {}
         self.data: Optional[Data] = None
         self.title_image: Optional[Path] = None
+        self.title_image_from_models: bool = False
         self.table_columns: int = 1
 
+        self.intermediate_path = Path()
+
+        self.title: str = ''
         self.parameter_order: list[str] = []
         self.parameter: list[Parameter] = []  # The configured parameter
         self.parameter_map: dict[str, Parameter] = {}
@@ -187,6 +154,7 @@ class WorkingSet:
         self.project_dir = Path(args.project_dir)
         if not self.project_dir.is_dir():
             raise ScriptError(f'The given project directory does not exist: {self.project_dir}')
+        self.intermediate_path = self.project_dir / 'tmp'
         if args.verbose:
             self.verbose = True
 
@@ -217,32 +185,6 @@ class WorkingSet:
         self.log.info(f'done scanning. found {len(self.model_files)} model files and '
                       f'{len(self.image_files)} image files.')
 
-    def compress_images(self):
-        """
-        Create small version of the images to embed in the PDF
-        """
-        self.log.info('Compressing images.')
-        path = self.project_dir / 'compressed_images'
-        if not path.is_dir():
-            path.mkdir()
-        new_image_files: dict[str, Path] = {}
-        for name, original_path in self.image_files.items():
-            target_path = (path / name).with_suffix('.jpg')
-            if not target_path.is_file():
-                self.log.info(f'Converting: {name}...')
-                args = [
-                    'convert',
-                    '-compress', 'jpeg2000',
-                    '-quality', '50',
-                    '-resize', '800x800',
-                    str(original_path),
-                    str(target_path)
-                ]
-                subprocess.run(args)
-            new_image_files[name] = target_path
-        self.image_files = new_image_files
-        self.log.info('done compressing images')
-
     def read_json(self):
         """
         Read all values from the CSV file.
@@ -251,7 +193,7 @@ class WorkingSet:
         self.log.info(f'Reading data from: {json_path}')
         text = json_path.read_text(encoding='utf-8')
         json_data = json.loads(text)
-        self.data = Data(json_data)
+        self.data = Data(json_data, self.project_dir)
         self.log.info(f'done reading data')
 
     def read_configuration(self):
@@ -263,6 +205,8 @@ class WorkingSet:
             raise ScriptError(f'Missing "config.ini" file in project: {self.project_dir}')
         config = configparser.ConfigParser()
         config.read(path, encoding='utf-8')
+        if 'title' in config['main']:
+            self.title = str(config['main']['title'])
         if 'parameter_order' not in config['main']:
             raise ScriptError('Missing value "parameter_order" in section "main" of "config.ini"')
         self.parameter_order = str(config['main']['parameter_order']).split()
@@ -279,10 +223,12 @@ class WorkingSet:
             derived_parameters: list[str] = config['main']['derived_parameters'].split()
         else:
             derived_parameters: list[str] = []
-        if not self.title_image.endswith('.jpg'):
-            self.title_image = self.image_files[f'{self.title_image}.jpg']
-        else:
+        if self.title_image.endswith(('.jpg', '.png')):
             self.title_image = self.project_dir / self.title_image
+            self.title_image_from_models = False
+        else:
+            self.title_image = self.image_files[f'{self.title_image}.jpg']
+            self.title_image_from_models = True
         for parameter_name in self.parameter_order:
             parameter: Parameter
             if parameter_name in self.data.parameter:
@@ -301,7 +247,7 @@ class WorkingSet:
                 parameter.derived_expression = expression
             else:
                 raise ScriptError(f'Missing parameter "{parameter_name}". Not in "parameters.json" and '
-                                  'also not deined in section "derived" in "config.ini".')
+                                  'also not defined in section "derived" in "config.ini".')
             if parameter_name in config['format']:
                 parameter.format_expression = str(config['format'][parameter_name]).strip()
             if parameter_name in derived_parameters:
@@ -311,12 +257,45 @@ class WorkingSet:
             if name in config['recommendations']:
                 self.recommendations.append((title, str(config['recommendations'][name])))
 
+    def compress_images(self):
+        """
+        Create small version of the images to embed in the PDF
+        """
+        self.log.info('Compressing images.')
+        title_image_name = ''
+        if not self.title_image_from_models:
+            title_image_name = f'{self.project_dir.name}-title-image.jpg'
+            self.image_files[title_image_name] = self.title_image
+        path = self.intermediate_path / 'compressed_images'
+        path.mkdir(parents=True, exist_ok=True)
+        new_image_files: dict[str, Path] = {}
+        for name, original_path in self.image_files.items():
+            target_path = (path / name).with_suffix('.jpg')
+            if not target_path.is_file():
+                self.log.info(f'Converting: {name}...')
+                args = [
+                    'convert',
+                    '-compress', 'jpeg2000',
+                    '-quality', '50',
+                    '-resize', '800x800',
+                    str(original_path),
+                    str(target_path)
+                ]
+                subprocess.run(args)
+            new_image_files[name] = target_path
+        self.image_files = new_image_files
+        if not self.title_image_from_models:
+            self.title_image = self.image_files[title_image_name]
+        else:
+            self.title_image = self.image_files[self.title_image.name]
+        self.log.info('done compressing images')
+
     def process_models(self):
         """
         Process all model entries
         """
         for model in self.data.models:
-            values: dict[str, Union[int, float]] = {}
+            values: dict[str, Union[int, float, str]] = {}
             formatted_values: dict[str, str] = {}
             # first pre-process all original values.
             for parameter in self.parameter:
@@ -326,7 +305,10 @@ class WorkingSet:
                 if '.' in value:
                     value = float(value)
                 else:
-                    value = int(value)
+                    try:
+                        value = int(value)
+                    except ValueError:
+                        pass
                 values[parameter.name] = value
             for parameter in self.parameter:
                 if parameter.is_derived and parameter.derived_expression:
@@ -337,10 +319,11 @@ class WorkingSet:
                 formatted_values[parameter.name] = parameter.format_value(value)
             model.values = values
             model.formatted_values = formatted_values
-            model.model_files = list([self.model_files[Path(p).name].relative_to(self.project_dir)
-                                      for p in model.model_files])
-            model.image_files = list([self.image_files[Path(p).with_suffix('.jpg').name].relative_to(self.project_dir)
-                                      for p in model.image_files])
+            model.model_files = list(
+                [self.model_files[Path(p).name].relative_to(self.project_dir) for p in model.model_files])
+            model.image_files = list(
+                [self.image_files[Path(p).with_suffix('.jpg').name].relative_to(self.intermediate_path)
+                    for p in model.image_files])
         for parameter in self.parameter:
             self.parameter_map[parameter.name] = parameter
         self.sorted_models = self.data.models.copy()
@@ -366,7 +349,7 @@ class WorkingSet:
             primary_group_parameter = primary_group_parameters[0]
             for g_value, g_formatted in self.value_sets[primary_group_parameter.name]:
                 title = f'Models with {primary_group_parameter.title} = {g_formatted}'
-                models = [m for m in self.sorted_models if m.values[self.primary_group] == g_value]
+                models = [m for m in self.sorted_models if m.values[self.primary_group[0]] == g_value]
                 self.model_groups.append(ModelGroup(title, models))
         elif len(self.primary_group) == 2:
             combinations = itertools.product(self.value_sets[primary_group_parameters[0].name],
@@ -418,61 +401,62 @@ class WorkingSet:
                 tables.append(Table(sub_title, fields, rows))
             self.table_groups.append(TableGroup(title, tables))
 
-    def generate_latex(self):
+    def write_latex_file(self, path: Path, template_name: str, label: str = ''):
+        """
+        Write the LaTeX file to create the PDF
+
+        :param path: The path of the LaTeX file.
+        :param template_name: The name of the template to use.
+        :param label: Optional label for the whole chapter.
+        """
+        self.log.info(f'Generating and writing LaTeX file to: {path}')
+        title = self.title
+        if not title:
+            title = self.data.component_name
+        if not label:
+            label = self.data.component_name
+        parameters = {
+            'title': title,
+            'label': label,
+            'component_name': self.data.component_name,
+            'model_groups': self.model_groups,
+            'parameter': self.parameter,
+            'table_groups': self.table_groups,
+            'title_image': self.title_image.relative_to(self.intermediate_path),
+            'table_columns': self.table_columns,
+            'recommendations': self.recommendations,
+        }
+        template_path = Path(__file__).parent / 'templates'
+        write_latex_template(template_path, template_name, parameters, path)
+        self.log.info('done writing the LaTeX file.')
+
+    def generate_pdf(self):
         """
         Generate the LaTeX document.
         """
-        path = self.project_dir / 'catalog.tex'
-        self.log.info(f'Generating and writing LaTeX file to: {path}')
-        env = Environment(  # for LaTeX
-            loader=FileSystemLoader((Path(__file__).parent / 'templates')),
-            autoescape=False,
-            variable_start_string='\\VAR{',
-            variable_end_string='}',
-            block_start_string='\\BLOCK{',
-            block_end_string='}',
-            line_statement_prefix='%%',
-            line_comment_prefix='%#',
-            trim_blocks=True,
-        )
-        env.filters['escape_latex'] = escape_latex
-        env.globals['component_name'] = self.data.component_name
-        env.globals['model_groups'] = self.model_groups
-        env.globals['parameter'] = self.parameter
-        env.globals['table_groups'] = self.table_groups
-        env.globals['title_image'] = str(self.title_image.relative_to(self.project_dir))
-        env.globals['table_columns'] = self.table_columns
-        env.globals['recommendations'] = self.recommendations
-        template = env.get_template("catalog.tex")
-        text = template.render()
-        path.write_text(text, encoding='utf-8')
-        self.log.info('done writing the LaTeX file.')
-        args = [
-            'pdflatex',
-            '-halt-on-error',
-            '-interaction=nonstopmode',
-            str(path)
-        ]
-        for i in range(3):
-            self.log.info(f'Running PDFLaTeX, iteration {i} ...')
-            result = subprocess.run(args, cwd=self.project_dir, capture_output=True)
-            if result.returncode != 0:
-                raise ScriptError(f'LaTeX build failed: {result.stdout}')
-            text = result.stdout.decode('utf-8')
-            if 'Rerun to get cross-references right' not in result.stdout.decode('utf-8'):
-                break
+        tex_path = self.intermediate_path / f'{self.CATALOG_NAME}.tex'
+        self.write_latex_file(tex_path, 'latex/catalog.tex')
+        target_path = self.project_dir / f'{self.data.component_name}-catalog.pdf'
+        create_pdf_from_latex(tex_path, target_path, self.log)
+
+    def clean_up(self):
+        """
+        Clean up all intermediate files.
+        """
+        shutil.rmtree(self.intermediate_path, ignore_errors=True)
 
     def run(self):
         try:
             self.parse_arguments()
             self.init_logging()
             self.scan_files()
-            self.compress_images()
             self.read_json()
             self.read_configuration()
+            self.compress_images()
             self.process_models()
             self.generate_tables()
-            self.generate_latex()
+            self.generate_pdf()
+            self.clean_up()
         except ScriptError as err:
             if self.log:
                 self.log.error(err)
@@ -480,7 +464,7 @@ class WorkingSet:
 
 
 def main():
-    ws = WorkingSet()
+    ws = CatalogWorkingSet()
     ws.run()
     exit(0)
 
