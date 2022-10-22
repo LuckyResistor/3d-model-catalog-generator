@@ -366,7 +366,7 @@ class WorkingSet:
             primary_group_parameter = primary_group_parameters[0]
             for g_value, g_formatted in self.value_sets[primary_group_parameter.name]:
                 title = f'Models with {primary_group_parameter.title} = {g_formatted}'
-                models = [m for m in self.sorted_models if m.values[self.primary_group] == g_value]
+                models = [m for m in self.sorted_models if m.values[self.primary_group[0]] == g_value]
                 self.model_groups.append(ModelGroup(title, models))
         elif len(self.primary_group) == 2:
             combinations = itertools.product(self.value_sets[primary_group_parameters[0].name],
