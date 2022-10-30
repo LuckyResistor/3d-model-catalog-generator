@@ -127,7 +127,7 @@ class SuperCatalogWorkingSet:
         self.log.info('done compressing image')
 
     def process_subprojects(self):
-        self.log.info('Procesing sub projects')
+        self.log.info('Processing sub projects')
         for sub_project in self.sub_projects:
             self.log.info(f'Processing {sub_project.name}')
             ws = CatalogWorkingSet()
@@ -180,7 +180,8 @@ class SuperCatalogWorkingSet:
         for project_dir, latex_file in self.sub_catalog_latex:
             self.log.info(f'Generating sub catalog PDF from: {latex_file}')
             target_path = project_dir / latex_file.with_suffix('.pdf').name
-            create_pdf_from_latex(latex_file, target_path, self.log)
+            tex_path = self.intermediate_path / latex_file.name
+            create_pdf_from_latex(tex_path, target_path, self.log)
 
     def run(self):
         try:

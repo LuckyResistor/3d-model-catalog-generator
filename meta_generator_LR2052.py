@@ -80,6 +80,11 @@ class SubProject:
             "title": "Split Model",
             "name": "split_model",
             "unit": ""
+        },
+        {
+            "title": "License",
+            "name": "license",
+            "unit": ""
         }
     ]
 
@@ -155,6 +160,19 @@ class SubProject:
             pattern = image_path.name.replace('-S.jpg', '-S*.3mf')
             return list(image_path.parent.glob(pattern))
 
+    def get_license(self, series: str, width: int, depth: int, variant: str):
+        free = 'Creative Commons'
+        paid = 'Limited License'
+        if series == '4' or series == '7':
+            return free
+        if width > 2 or depth > 3:
+            return paid
+        if (series == '1' or series == '3') and variant and variant != 'G3':
+            return paid
+        if series == '2' and variant and variant != 'G6':
+            return paid
+        return free
+
     def parameter_from_match(self, match: re.Match) -> dict[str, str]:
         """
         Extract all parameter from the file name match.
@@ -168,6 +186,9 @@ class SubProject:
             'depth': str(self.RASTER_Y * int(match_values['depth'])),
             'height': str(self.SERIES_HEIGHTS[match_values['series']]),
             'series': match_values['series'],
+            'license': self.get_license(
+                match_values['series'], int(match_values['width']),
+                int(match_values['depth']), match_values['variant'])
         }
         stacking_height = str(self.SERIES_STACKING_HEIGHTS[match_values['series']])
         if stacking_height != 0:
@@ -211,9 +232,9 @@ class SubProject:
         )
         env.globals['title'] = self.title
         if not self.name.startswith('LR2052-7'):
-            env.globals['parameter_order'] = 'width depth height stacking_height grid_layout split_model'
+            env.globals['parameter_order'] = 'width depth height stacking_height grid_layout split_model license'
         else:
-            env.globals['parameter_order'] = 'width depth height'
+            env.globals['parameter_order'] = 'width depth height license'
         title_image_candidates = list([m.part_id for m in self.models if m.original_values['width'] == '120' and m.original_values['depth'] == '120'])
         if not title_image_candidates:
             title_image_candidates = [sorted(self.models, key=lambda m: m.part_id)[0].part_id]
