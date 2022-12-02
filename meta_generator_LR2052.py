@@ -6,8 +6,10 @@ import argparse
 import json
 import logging
 import re
+import tomllib
+from dataclasses import dataclass
 from pathlib import Path
-from typing import Optional
+from typing import Optional, Any, Union
 
 from jinja2 import Environment, FileSystemLoader
 
@@ -15,155 +17,107 @@ from lib.model import Model
 from lib.exceptions import ScriptError
 
 
+@dataclass
+class Parameter:
+    title: str
+    name: str
+    unit: str
+    for_tables: bool
+    for_detail: bool
+
+
+@dataclass
+class Project:
+    product: str
+    raster_x: int
+    raster_y: int
+    raster_z: int
+    parameter: list[dict[str, Union[str, int, bool]]]
+
+
 class SubProject:
     """
     A single subproject.
     """
 
-    RASTER_X = 60
-    RASTER_Y = 60
-    RASTER_Z = 40
-
-    SERIES_HEIGHTS = {
-        '1': 44,
-        '14': 164,
-        '2': 24,
-        '3': 84,
-        '4': 9,
-        '5': 124,
-        '6': 64,
-        '7': 4,
-    }
-    SERIES_STACKING_HEIGHTS = {
-        '1': 40,
-        '14': 160,
-        '2': 20,
-        '3': 80,
-        '4': 5,
-        '5': 120,
-        '6': 60,
-        '7': 0,
-    }
-
-    PARAMETER_DEFINITIONS = [
-        {
-            "title": "Width",
-            "name": "width",
-            "unit": "mm"
-        },
-        {
-            "title": "Depth",
-            "name": "depth",
-            "unit": "mm"
-        },
-        {
-            "title": "Height",
-            "name": "height",
-            "unit": "mm"
-        },
-        {
-            "title": "Stacking Height",
-            "name": "stacking_height",
-            "unit": "mm"
-        },
-        {
-            "title": "Series",
-            "name": "series",
-            "unit": ""
-        },
-        {
-            "title": "Grid Layout",
-            "name": "grid_layout",
-            "unit": ""
-        },
-        {
-            "title": "Split Model",
-            "name": "split_model",
-            "unit": ""
-        },
-        {
-            "title": "License",
-            "name": "license",
-            "unit": ""
-        }
-    ]
-
     def __init__(self,
+                 project: Project,
                  name: str,
-                 file_pattern: Optional[str] = None):
+                 title: str,
+                 model_name: str,
+                 height: int,
+                 stacking_height: int,
+                 parameter: list[Parameter]):
         """
         Create the definition of a new subproject.
 
         :param name: The name of the subproject.
-        :param file_pattern: Optional pattern to match the project files.
         """
-        self.name = name
-        if not file_pattern:
-            self.file_pattern: re.Pattern = re.compile(
-                R'LR2052-(?P<series>\d{1,2})(?P<width>\d)(?P<depth>\d)(?P<revision>[A-Z])'
-                R'(?:-(?P<variant>G\d|S))?\.jpg')
-        else:
-            self.file_pattern: re.Pattern = re.compile(file_pattern)
+        self.project: Project = project
+        self.name: str = name
+        self.title: str = title
+        self.model_name: str = model_name
+        self.height: int = height
+        self.stacking_height: int = stacking_height
+        self.parameter: list[Parameter] = parameter
+        # helper
+        self.file_pattern = re.compile(
+            R'(?P<part_id>LR2052-(?P<series>\d{1,2})(?P<width>\d)(?P<depth>\d)(?P<revision>[A-Z])'
+            R'(?:-(?P<variant>G\d|S))?)\.(?:jpg|jp2)')
         # runtime
+        self.project_dir = Path()
         self.models: list[Model] = []
-        self.title: str = ''
-        self.model_title_pattern: str = ''
+        self.drawing_image: str = ''
 
-    def collect_all_models(self, project_dir: Path):
+    def initialize(self, project_dir: Path):
         """
-        Collect all files for this project.
+        Initialize the subproject from the given project directory.
 
         :param project_dir: The project directory.
         """
-        for path in project_dir.glob('*'):
+        self.project_dir = project_dir
+        self.check_for_drawing()
+        self.collect_all_models()
+        self.write_parameters_json()
+        self.write_config_ini()
+
+    def check_for_drawing(self):
+        """
+        Check if this project has a drawing.
+        """
+        for file in self.project_dir.glob('*.jp*'):
+            if file.name.endswith(('-drawing.jpg', '-drawing.jp2')):
+                self.drawing_image = file.name
+                break
+
+    def collect_all_models(self):
+        """
+        Collect all files for this project.
+        """
+        for path in self.project_dir.glob('*'):
             match = self.file_pattern.match(path.name)
             if not match:
                 continue
-            part_id = self.part_id_from_image(path)
+            part_id = match.group('part_id')
             image_files = [path]
-            model_files = self.model_files_from_image(path)
+            plain_image_file = path.parent / f'{path.stem}-plain{path.suffix}'
+            if plain_image_file.is_file():
+                image_files = [plain_image_file]
+            # Add model files that have the same base name as the image.
+            model_files = list(path.parent.glob(f'{path.stem}*.3mf'))
+            model_files.sort()
             parameter = self.parameter_from_match(match)
             model = Model(part_id, model_files, image_files, parameter)
             self.models.append(model)
 
-    def read_series_info(self, project_dir: Path):
-        """
-        Read titles from series info
-
-        :param project_dir: The project directory.
-        :return:
-        """
-        text = (project_dir / 'series-info.json').read_text(encoding='utf-8')
-        data = json.loads(text)
-        self.title = data['series_name']
-        self.model_title_pattern = data['model_name']
-
-    def part_id_from_image(self, image_path: Path) -> str:
-        """
-        Extract the part ID from the image file path.
-
-        :param image_path: The path to the image.
-        :return: The part ID
-        """
-        return image_path.name.replace('.jpg', '')
-
-    def model_files_from_image(self, image_path: Path) -> list[Path]:
-        """
-        Get a list of model files from the image file.
-
-        :param image_path: The path to the image.
-        :return: A list of paths.
-        """
-        if '-S' not in image_path.name:
-            return [image_path.with_suffix('.3mf')]
-        else:
-            pattern = image_path.name.replace('-S.jpg', '-S*.3mf')
-            return list(image_path.parent.glob(pattern))
-
     def get_license(self, series: str, width: int, depth: int, variant: str):
         free = 'Creative Commons'
         paid = 'Limited License'
-        if series == '4' or series == '7':
+        if series == '4':
+            return free
+        if series == '7' or series == '16' or series == '17' or series == '18' or series == '19':
+            if width > 3 or depth > 4:
+                return paid
             return free
         if width > 2 or depth > 3:
             return paid
@@ -181,18 +135,26 @@ class SubProject:
         :return: A dictionary with the extracted parameter.
         """
         match_values = match.groupdict()
-        parameter: dict[str, str] = {
-            'width': str(self.RASTER_X * int(match_values['width'])),
-            'depth': str(self.RASTER_Y * int(match_values['depth'])),
-            'height': str(self.SERIES_HEIGHTS[match_values['series']]),
+        unit_width = int(match_values['width'])
+        unit_depth = int(match_values['depth'])
+        width = self.project.raster_x * unit_width
+        depth = self.project.raster_y * unit_depth
+        parameter: dict[str, Union[str, int, float]] = {
+            'width': width,
+            'depth': depth,
+            'unit_width': unit_width,
+            'unit_depth': unit_depth,
+            'combined_width': f"{width} mm ({unit_width} units)",
+            'combined_depth': f"{depth} mm ({unit_depth} units)",
             'series': match_values['series'],
             'license': self.get_license(
                 match_values['series'], int(match_values['width']),
                 int(match_values['depth']), match_values['variant'])
         }
-        stacking_height = str(self.SERIES_STACKING_HEIGHTS[match_values['series']])
-        if stacking_height != 0:
-            parameter['stacking_height'] = stacking_height
+        if self.height != 0:
+            parameter['height'] = self.height
+        if self.stacking_height != 0:
+            parameter['stacking_height'] = str(self.stacking_height)
         parameter['grid_layout'] = 'None'
         parameter['split_model'] = 'No'
         variant = match_values['variant']
@@ -203,7 +165,7 @@ class SubProject:
                 parameter['split_model'] = 'Yes'
         return parameter
 
-    def write_parameters_json(self, project_dir: Path):
+    def write_parameters_json(self):
         """
         Write the collected parameters into the project directory.
 
@@ -213,38 +175,47 @@ class SubProject:
             values = {
                 'width': int(model.original_values['width']),
                 'depth': int(model.original_values['depth']),
+                'unit_width': int(model.original_values['unit_width']),
+                'unit_depth': int(model.original_values['unit_depth']),
             }
-            model.title = self.model_title_pattern % values
-        path = project_dir / 'parameters.json'
+            model.title = self.model_name % values
+        path = self.project_dir / 'parameters.json'
         data = {
             'title': self.title,
-            'component_name': self.name,
-            'parameter': self.PARAMETER_DEFINITIONS,
-            'models': list([m.to_json(project_dir) for m in self.models])
+            'component_name': f'{self.project.product}-{self.name}',
+            'parameter': list([{'name': p.name, 'title': p.title, 'unit': p.unit} for p in self.parameter]),
+            'models': list([m.to_json(self.project_dir) for m in self.models])
         }
         text = json.dumps(data, indent=4)
         path.write_text(text, encoding='utf-8')
 
-    def write_config_ini(self, project_dir: Path):
+    def write_config_ini(self):
         env = Environment(
             loader=FileSystemLoader((Path(__file__).parent / 'templates')),
             autoescape=False
         )
-        env.globals['title'] = self.title
-        if not self.name.startswith('LR2052-7'):
-            env.globals['parameter_order'] = 'width depth height stacking_height grid_layout split_model license'
-        else:
-            env.globals['parameter_order'] = 'width depth height license'
-        title_image_candidates = list([m.part_id for m in self.models if m.original_values['width'] == '120' and m.original_values['depth'] == '120'])
+        context = {'title': self.title}
+        parameter_order: list[str] = []
+        detail_order: list[str] = []
+        for p in self.parameter:
+            if p.for_tables:
+                parameter_order.append(p.name)
+            if p.for_detail:
+                detail_order.append(p.name)
+        context['parameter_order'] = ' '.join(parameter_order)
+        context['detail_order'] = ' '.join(detail_order)
+        title_image_candidates = list([
+            m.part_id for m in self.models if m.original_values['unit_width'] == 2 and m.original_values['unit_depth'] == 3])
         if not title_image_candidates:
             title_image_candidates = [sorted(self.models, key=lambda m: m.part_id)[0].part_id]
         title_image = title_image_candidates[0]
         if len(title_image) < 4:
             raise ScriptError('Title image part ID too short.')
-        env.globals['title_image'] = title_image
+        context['title_image'] = title_image
+        context['drawing_image'] = self.drawing_image
         template = env.get_template("LR2052/sub_project_config.ini")
-        text = template.render()
-        path = project_dir / 'config.ini'
+        text = template.render(context)
+        path = self.project_dir / 'config.ini'
         path.write_text(text, encoding='utf-8')
 
 
@@ -253,36 +224,15 @@ class WorkingSet:
     The working set for this script.
     """
 
-    SUB_PROJECTS = [
-        SubProject('LR2052-100C'),
-        SubProject('LR2052-100C-G1'),
-        SubProject('LR2052-100C-G2'),
-        SubProject('LR2052-100C-G3'),
-        SubProject('LR2052-100C-S'),
-        SubProject('LR2052-200C'),
-        SubProject('LR2052-200C-G1'),
-        SubProject('LR2052-200C-G2'),
-        SubProject('LR2052-200C-G3'),
-        SubProject('LR2052-200C-G4'),
-        SubProject('LR2052-200C-G5'),
-        SubProject('LR2052-200C-G6'),
-        SubProject('LR2052-300C'),
-        SubProject('LR2052-300C-G1'),
-        SubProject('LR2052-300C-G2'),
-        SubProject('LR2052-300C-G3'),
-        SubProject('LR2052-300C-S'),
-        SubProject('LR2052-400C'),
-        SubProject('LR2052-500C'),
-        SubProject('LR2052-600C'),
-        SubProject('LR2052-700C'),
-        SubProject('LR2052-1400C'),
-    ]
-
     def __init__(self):
         """
         Create a new working set.
         """
         self.project_dir = Path()
+        self.project: Optional[Project] = None
+        self.sub_projects: list[SubProject] = []
+        self.verbose = False
+        self.log: Optional[logging.Logger] = None
 
     def parse_arguments(self):
         """
@@ -314,25 +264,69 @@ class WorkingSet:
         self.log = logging.getLogger('main')
         self.log.info(f'Starting metadata generator for directory: {self.project_dir}')
 
+    def read_meta_data(self):
+        """
+        Read all metadata from `LR2052_series.toml`
+        """
+        self.log.info('Read metadata')
+        path = Path(__file__).parent / 'data' / 'LR2052_series.toml'
+        text = path.read_text(encoding='utf-8')
+        data = tomllib.loads(text)
+        self.project = Project(
+            product=data['product'],
+            raster_x=data['raster_x'],
+            raster_y=data['raster_y'],
+            raster_z=data['raster_z'],
+            parameter=data['parameter'])
+        for series in data['series']:
+            parameter: list[Parameter] = []
+            excluded_parameter = []
+            if 'excluded_parameters' in series:
+                excluded_parameter = series['excluded_parameters']
+            for project_parameter in self.project.parameter:
+                new_p = Parameter(
+                    title=project_parameter['title'],
+                    name=project_parameter['name'],
+                    unit=project_parameter['unit'],
+                    for_tables=project_parameter['for_tables'],
+                    for_detail=project_parameter['for_detail'],
+                )
+                is_excluded = False
+                if 'excluded' in project_parameter and project_parameter['excluded']:
+                    is_excluded = True
+                if project_parameter['name'] in excluded_parameter:
+                    is_excluded = True
+                if is_excluded:
+                    new_p.for_detail = False
+                    new_p.for_tables = False
+                parameter.append(new_p)
+            sub_project = SubProject(
+                project=self.project,
+                name=series['name'],
+                title=series['title'],
+                model_name=series['model_name'],
+                height=series['height'],
+                stacking_height=series['stacking_height'],
+                parameter=parameter)
+            self.sub_projects.append(sub_project)
+
     def process_projects(self):
         """
         Process the individual projects.
         """
         self.log.info('Processing subprojects')
-        for sub_project in self.SUB_PROJECTS:
-            path = self.project_dir / sub_project.name
+        for sub_project in self.sub_projects:
+            path = self.project_dir / f'{self.project.product}-{sub_project.name}'
             if not path.is_dir():
                 raise ScriptError(f'Missing directory for sub project {sub_project.name}.')
-            sub_project.collect_all_models(path)
-            sub_project.read_series_info(path)
-            sub_project.write_parameters_json(path)
-            sub_project.write_config_ini(path)
+            sub_project.initialize(path)
         self.log.info(f'done processing.')
 
     def run(self):
         try:
             self.parse_arguments()
             self.init_logging()
+            self.read_meta_data()
             self.process_projects()
         except ScriptError as err:
             if self.log:

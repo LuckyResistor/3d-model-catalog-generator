@@ -39,11 +39,11 @@
 \begin{titlepage}
 \begin{center}
 \vspace*{15mm}
-{\bfseries\fontsize{80}{90}\selectfont Catalog \par}
+{\bfseries\fontsize{65}{75}\selectfont Catalog \par}
 \vspace*{5mm}
-{\bfseries\fontsize{60}{80}\selectfont \VAR{ title|escape_latex } \par}
+{\bfseries\fontsize{40}{50}\selectfont \VAR{ title|escape_latex } \par}
 \vspace*{1cm}
-\includegraphics[width=\columnwidth]{\VAR{ title_image }}
+\includegraphics[width=\columnwidth]{\VAR{ compressed_images[title_image] }}
 \vspace*{1mm}
 {\bfseries\fontsize{25}{30}\selectfont Lucky Resistor \\ \href{https://luckyresistor.me}{https://luckyresistor.me/}}
 \end{center}
@@ -53,17 +53,28 @@
 \pagebreak
 \section{Print Recommendations}
 
+\begin{center}
 \rowcolors{2}{row1}{row2}
 \begin{tabularx}{\columnwidth}{ l X }
     \rowcolor{black!60}\textcolor{white}{\textbf{Parameter}} & \textcolor{white}{\textbf{Recommendation}} \\
 \BLOCK{ for r in recommendations }\textbf{\VAR{ r[0]|escape_latex }} & \VAR{ r[1]|escape_latex } \\
 \BLOCK{ endfor }
 \end{tabularx}
+\end{center}
+
+\BLOCK{ if drawing_image }
+\section{Dimensions}
+
+\begin{center}
+\includegraphics[width=\columnwidth]{\VAR{ compressed_images[drawing_image] }}
+\end{center}
+\BLOCK{ endif }
 
 \vfill
 
 \pagebreak
 \section{Models}\label{models}
+
 \BLOCK{ for model_group in model_groups }
 \BLOCK{ if not loop.first }\pagebreak\BLOCK{ endif }
 \subsection{\VAR{ model_group.title|escape_latex }}
@@ -74,13 +85,14 @@
 
 \begin{minipage}{\columnwidth}
 \footnotesize
-\includegraphics[width=\columnwidth]{\VAR{ model.image_files[0] }}
+\includegraphics[width=\columnwidth]{\VAR{ compressed_images[model.image_files[0].name] }}
 
 \rowcolors{2}{row1}{row2}
 \begin{tabularx}{\columnwidth}{ l X }
     \rowcolor{black!60}\textcolor{white}{\textbf{Parameter}} & \textcolor{white}{\textbf{Value}} \\
 \BLOCK{ for p in parameter }\textbf{\VAR{ p.title|escape_latex }} & \VAR{model.formatted_values[p.name]|escape_latex} \\
 \BLOCK{ endfor }
+\textbf{Model Files} & \BLOCK{ for name in model.model_files }\BLOCK{ if not loop.first }\newline \BLOCK{ endif }\VAR{name|escape_latex}\BLOCK{ endfor } \\
 \end{tabularx}
 \end{minipage}
 
@@ -91,6 +103,7 @@
 \BLOCK{ endfor }
 
 \BLOCK{ for table_group in table_groups }
+
 \pagebreak
 \section{\VAR{ table_group.title|escape_latex }}
 

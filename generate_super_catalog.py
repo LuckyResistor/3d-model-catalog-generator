@@ -116,7 +116,6 @@ class SuperCatalogWorkingSet:
             self.log.info(f'Converting: {self.title_image.name}...')
             args = [
                 'convert',
-                '-compress', 'jpeg2000',
                 '-quality', '50',
                 '-resize', '800x800',
                 str(self.title_image),
@@ -137,8 +136,8 @@ class SuperCatalogWorkingSet:
             ws.scan_files()
             ws.read_json()
             ws.read_configuration()
-            ws.compress_images()
             ws.process_models()
+            ws.compress_images()
             ws.generate_tables()
             latex_path = self.intermediate_path / f'{sub_project.name}-catalog.tex'
             ws.write_latex_file(latex_path, 'latex/catalog.tex', label=sub_project.name)
@@ -147,7 +146,7 @@ class SuperCatalogWorkingSet:
             ws.write_latex_file(latex_path, 'latex/catalog-part.tex', label=sub_project.name)
             self.chapters.append(str(latex_path.relative_to(self.intermediate_path)))
             sub_project.title = ws.title
-            sub_project.title_image = ws.title_image
+            sub_project.title_image = ws.compressed_images[ws.title_image]
         self.log.info('done processing sub projects')
 
     def write_latex_file(self, path: Path, template_name: str):

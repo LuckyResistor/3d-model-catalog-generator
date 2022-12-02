@@ -117,19 +117,23 @@ class CatalogWorkingSet:
         self.project_dir = Path()
         self.verbose = False
         self.log: Optional[logging.Logger] = None
-        self.model_files: dict[str, Path] = {}
-        self.image_files: dict[str, Path] = {}
+        self.model_files: dict[str, Path] = {}  # A map with all model files.
+        self.image_files: dict[str, Path] = {}  # A map with all images found in the project directory
         self.data: Optional[Data] = None
-        self.title_image: Optional[Path] = None
+        self.title_image: str = ''
         self.title_image_from_models: bool = False
+        self.drawing_image: str = ''
         self.table_columns: int = 1
 
         self.intermediate_path = Path()
 
+        self.images_to_compress: list[str] = []  # A list of images that need compression.
+        self.compressed_images: dict[str, Path] = {}  # A map with all compressed images (original_name -> compressed)
         self.title: str = ''
-        self.parameter_order: list[str] = []
-        self.parameter: list[Parameter] = []  # The configured parameter
-        self.parameter_map: dict[str, Parameter] = {}
+        self.parameter_order: list[str] = []  # The order of the parameters for the tables and index.
+        self.detail_order: list[str] = []     # The order of displayed attributes below the model image.
+        self.all_parameters: list[str] = []   # A sorted list of all parameter names.
+        self.parameter_map: dict[str, Parameter] = {}  # All configured parameters.
         self.primary_group: str = ''
         self.sorted_models: list[Model] = []
         self.model_groups: list[ModelGroup] = []  # The main model groups.
@@ -170,7 +174,7 @@ class CatalogWorkingSet:
 
     def scan_files(self):
         """
-        Scann for relevant files to store the paths.
+        Scan for relevant files to store the paths.
         """
         self.log.info('Scanning for files.')
         for file in self.project_dir.rglob(pattern='*'):
@@ -178,7 +182,7 @@ class CatalogWorkingSet:
                 self.model_files[file.name] = file
                 if self.verbose:
                     self.log.debug(f'  model {file.name}: {file}')
-            if file.name.endswith('.jpg'):
+            if file.name.endswith(('.jpg', '.jp2', '.png')):
                 self.image_files[file.name] = file
                 if self.verbose:
                     self.log.debug(f'  image {file.name}: {file}')
@@ -187,7 +191,7 @@ class CatalogWorkingSet:
 
     def read_json(self):
         """
-        Read all values from the CSV file.
+        Read all values from the JSON file.
         """
         json_path = self.project_dir / 'parameters.json'
         self.log.info(f'Reading data from: {json_path}')
@@ -210,12 +214,18 @@ class CatalogWorkingSet:
         if 'parameter_order' not in config['main']:
             raise ScriptError('Missing value "parameter_order" in section "main" of "config.ini"')
         self.parameter_order = str(config['main']['parameter_order']).split()
+        if 'detail_order' in config['main']:
+            self.detail_order = str(config['main']['detail_order']).split()
+        else:
+            self.detail_order = self.parameter_order
         if 'primary_group' not in config['main']:
             raise ScriptError('Missing value "primary_group" in section "main" of "config.ini"')
         self.primary_group = str(config['main']['primary_group']).split()
         if 'title_image' not in config['main']:
             raise ScriptError('Missing value "title_image" in section "main" of "config.ini"')
         self.title_image = config["main"]["title_image"]
+        if 'drawing_image' in config['main']:
+            self.drawing_image = config['main']['drawing_image']
         if 'table_columns' not in config['main']:
             raise ScriptError('Missing value "table_columns" in section "main" of "config.ini"')
         self.table_columns = int(config["main"]["table_columns"])
@@ -223,13 +233,40 @@ class CatalogWorkingSet:
             derived_parameters: list[str] = config['main']['derived_parameters'].split()
         else:
             derived_parameters: list[str] = []
-        if self.title_image.endswith(('.jpg', '.png')):
-            self.title_image = self.project_dir / self.title_image
+        self.all_parameters = list(set(self.parameter_order).union(set(self.detail_order)))
+
+        # Check the title and drawing images.
+        if self.title_image.endswith(('.jpg', '.jp2', '.png')):
+            if self.title_image not in self.image_files:
+                raise ScriptError(f'Could not find specified title image `{self.title_image}`.')
             self.title_image_from_models = False
         else:
-            self.title_image = self.image_files[f'{self.title_image}.jpg']
+            possible_names = [
+                f'{self.title_image}-plain.jp2',
+                f'{self.title_image}-plain.jpg',
+                f'{self.title_image}-plain.png',
+                f'{self.title_image}.jp2',
+                f'{self.title_image}.jpg',
+                f'{self.title_image}.png',
+            ]
+            name = ''
+            for possible_name in possible_names:
+                if possible_name in self.image_files:
+                    name = possible_name
+                    break
+            if not name:
+                raise ScriptError(f'Could not find title image file for model `{self.title_image}`.')
+            self.title_image = name
             self.title_image_from_models = True
-        for parameter_name in self.parameter_order:
+        if self.title_image:
+            self.images_to_compress.append(self.title_image)
+        if self.drawing_image:
+            if self.drawing_image not in self.image_files:
+                raise ScriptError(f'Could not find drawing image `{self.drawing_image}`.')
+            self.images_to_compress.append(self.drawing_image)
+
+        # Check the parameters.
+        for parameter_name in self.all_parameters:
             parameter: Parameter
             if parameter_name in self.data.parameter:
                 parameter = self.data.parameter[parameter_name]
@@ -252,57 +289,27 @@ class CatalogWorkingSet:
                 parameter.format_expression = str(config['format'][parameter_name]).strip()
             if parameter_name in derived_parameters:
                 parameter.is_derived = True
-            self.parameter.append(parameter)
+            self.parameter_map[parameter_name] = parameter
         for name, title in self.RECOMMENDATIONS:
             if name in config['recommendations']:
                 self.recommendations.append((title, str(config['recommendations'][name])))
-
-    def compress_images(self):
-        """
-        Create small version of the images to embed in the PDF
-        """
-        self.log.info('Compressing images.')
-        title_image_name = ''
-        if not self.title_image_from_models:
-            title_image_name = f'{self.project_dir.name}-title-image.jpg'
-            self.image_files[title_image_name] = self.title_image
-        path = self.intermediate_path / 'compressed_images'
-        path.mkdir(parents=True, exist_ok=True)
-        new_image_files: dict[str, Path] = {}
-        for name, original_path in self.image_files.items():
-            target_path = (path / name).with_suffix('.jpg')
-            if not target_path.is_file():
-                self.log.info(f'Converting: {name}...')
-                args = [
-                    'convert',
-                    '-compress', 'jpeg2000',
-                    '-quality', '50',
-                    '-resize', '800x800',
-                    str(original_path),
-                    str(target_path)
-                ]
-                subprocess.run(args)
-            new_image_files[name] = target_path
-        self.image_files = new_image_files
-        if not self.title_image_from_models:
-            self.title_image = self.image_files[title_image_name]
-        else:
-            self.title_image = self.image_files[self.title_image.name]
-        self.log.info('done compressing images')
 
     def process_models(self):
         """
         Process all model entries
         """
         for model in self.data.models:
+            if self.verbose:
+                self.log.debug(f'Processing model {model.part_id}')
             values: dict[str, Union[int, float, str]] = {}
             formatted_values: dict[str, str] = {}
             # first pre-process all original values.
-            for parameter in self.parameter:
+            for parameter_name in self.all_parameters:
+                parameter = self.parameter_map[parameter_name]
                 if parameter.is_derived and parameter.derived_expression:
                     continue
                 value = model.original_values[parameter.name]
-                if '.' in value:
+                if '.' in str(value):
                     value = float(value)
                 else:
                     try:
@@ -310,7 +317,8 @@ class CatalogWorkingSet:
                     except ValueError:
                         pass
                 values[parameter.name] = value
-            for parameter in self.parameter:
+            for parameter_name in self.all_parameters:
+                parameter = self.parameter_map[parameter_name]
                 if parameter.is_derived and parameter.derived_expression:
                     value = eval(parameter.derived_expression, {'values': values})
                     values[parameter.name] = value
@@ -321,13 +329,38 @@ class CatalogWorkingSet:
             model.formatted_values = formatted_values
             model.model_files = list(
                 [self.model_files[Path(p).name].relative_to(self.project_dir) for p in model.model_files])
-            model.image_files = list(
-                [self.image_files[Path(p).with_suffix('.jpg').name].relative_to(self.intermediate_path)
-                    for p in model.image_files])
-        for parameter in self.parameter:
-            self.parameter_map[parameter.name] = parameter
+            for image_file in model.image_files:
+                if image_file.name not in self.image_files:
+                    raise ScriptError(f'Could not find image file `{image_file.name}` for model `{model.part_id}`.')
+                if self.verbose:
+                    self.log.debug(f'- adding image `{image_file.name}` for compression.')
+                self.images_to_compress.append(image_file.name)
         self.sorted_models = self.data.models.copy()
         self.sorted_models.sort(key=lambda x: itemgetter(*self.parameter_order)(x.values))
+
+    def compress_images(self):
+        """
+        Create small version of the images to embed in the PDF
+        """
+        self.log.info('Compressing images.')
+        compressed_images_path = self.intermediate_path / 'compressed_images'
+        compressed_images_path.mkdir(parents=True, exist_ok=True)
+        for image_file in self.images_to_compress:
+            # Convert all images into a highly compressed JPEG, as they get embedded 1:1 into the PDF
+            original_path = self.image_files[image_file]
+            target_path = compressed_images_path / original_path.with_suffix('.jpg').name
+            if not target_path.is_file():  # Don't convert if the file is already converted.
+                self.log.info(f'Converting: {original_path.name} => {target_path.name}...')
+                args = [
+                    'convert',
+                    '-quality', '50',
+                    '-resize', '800x800',
+                    str(original_path),
+                    str(target_path)
+                ]
+                subprocess.run(args)
+            self.compressed_images[image_file] = target_path.relative_to(self.intermediate_path)
+        self.log.info('done compressing images')
 
     def generate_tables(self):
         """
@@ -335,14 +368,15 @@ class CatalogWorkingSet:
         """
         # Get the range for each value.
         value_sets: dict[str, set] = {}
-        for parameter in self.parameter:
-            value_sets[parameter.name] = set()
+        for parameter_name in self.parameter_order:
+            value_sets[parameter_name] = set()
         for model in self.data.models:
-            for parameter in self.parameter:
-                value_sets[parameter.name].add(model.values[parameter.name])
-        for parameter in self.parameter:
-            self.value_sets[parameter.name] = \
-                list([(v, parameter.format_value(v)) for v in sorted(list(value_sets[parameter.name]))])
+            for parameter_name in self.parameter_order:
+                value_sets[parameter_name].add(model.values[parameter_name])
+        for parameter_name in self.parameter_order:
+            parameter = self.parameter_map[parameter_name]
+            self.value_sets[parameter_name] = \
+                list([(v, parameter.format_value(v)) for v in sorted(list(value_sets[parameter_name]))])
         # Create the main model groups
         primary_group_parameters: list[Parameter] = list([self.parameter_map[g] for g in self.primary_group])
         if len(self.primary_group) == 1:
@@ -372,8 +406,9 @@ class CatalogWorkingSet:
         else:
             raise ValueError('Not more than two parameters supported for primary group.')
         # Create tables to find certain parameters
-        for parameter in self.parameter:
-            if len(self.value_sets[parameter.name]) < 2:
+        for parameter_name in self.parameter_order:
+            parameter = self.parameter_map[parameter_name]
+            if len(self.value_sets[parameter_name]) < 2:
                 continue  # Skip parameters with only one value.
             if parameter.is_derived:
                 continue  # Skip derived parameter.
@@ -383,8 +418,9 @@ class CatalogWorkingSet:
                 sub_title = f'{parameter.title} = {g_formatted}'
                 fields = ['Part ID']
                 columns = ['part_id']
-                for p in self.parameter:
-                    if p.name != parameter.name:
+                for pn in self.parameter_order:
+                    if pn != parameter.name:
+                        p = self.parameter_map[pn]
                         fields.append(p.title)
                         columns.append(p.name)
                 rows = []
@@ -415,17 +451,21 @@ class CatalogWorkingSet:
             title = self.data.component_name
         if not label:
             label = self.data.component_name
+        detail_parameters = list([self.parameter_map[pn] for pn in self.detail_order])
         parameters = {
             'title': title,
             'label': label,
             'component_name': self.data.component_name,
             'model_groups': self.model_groups,
-            'parameter': self.parameter,
+            'parameter': detail_parameters,
             'table_groups': self.table_groups,
-            'title_image': self.title_image.relative_to(self.intermediate_path),
+            'title_image': self.title_image,
             'table_columns': self.table_columns,
             'recommendations': self.recommendations,
+            'compressed_images': self.compressed_images,
         }
+        if self.drawing_image:
+            parameters['drawing_image'] = self.drawing_image
         template_path = Path(__file__).parent / 'templates'
         write_latex_template(template_path, template_name, parameters, path)
         self.log.info('done writing the LaTeX file.')
@@ -452,8 +492,8 @@ class CatalogWorkingSet:
             self.scan_files()
             self.read_json()
             self.read_configuration()
-            self.compress_images()
             self.process_models()
+            self.compress_images()
             self.generate_tables()
             self.generate_pdf()
             self.clean_up()

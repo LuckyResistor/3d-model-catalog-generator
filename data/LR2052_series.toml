@@ -1,0 +1,301 @@
+#
+# Meta information about the various model series of the LR2052 project
+#
+
+product = "LR2052"
+raster_x = 60
+raster_y = 60
+raster_z = 40
+
+[[parameter]]
+title = "Series"
+name = "series"
+unit = ""
+for_tables = false
+for_detail = false
+
+[[parameter]]
+title = "Width"
+name = "combined_width"
+unit = ""
+for_tables = false
+for_detail = true
+
+[[parameter]]
+title = "Depth"
+name = "combined_depth"
+unit = ""
+for_tables = false
+for_detail = true
+
+[[parameter]]
+title = "Width"
+name = "width"
+unit = "mm"
+for_tables = true
+for_detail = false
+
+[[parameter]]
+title = "Depth"
+name = "depth"
+unit = "mm"
+for_tables = true
+for_detail = false
+
+[[parameter]]
+title = "Unit Width"
+name = "unit_width"
+unit = "units"
+for_tables = true
+for_detail = false
+
+[[parameter]]
+title = "Unit Depth"
+name = "unit_depth"
+unit = "units"
+for_tables = true
+for_detail = false
+
+[[parameter]]
+title = "Height"
+name = "height"
+unit = "mm"
+for_tables = true
+for_detail = true
+
+[[parameter]]
+title = "Stacking Height"
+name = "stacking_height"
+unit = "mm"
+for_tables = true
+for_detail = true
+
+[[parameter]]
+title = "Grid Layout"
+name = "grid_layout"
+unit = ""
+for_tables = true
+for_detail = true
+
+[[parameter]]
+title = "Split Model"
+name = "split_model"
+unit = ""
+for_tables = true
+for_detail = true
+
+[[parameter]]
+title = "License"
+name = "license"
+unit = ""
+for_tables = true
+for_detail = true
+
+
+[[series]]
+name = "100C"
+title = "Regular Boxes"
+model_name = "Regular Box %(unit_depth)d×%(unit_width)d"
+height = 44
+stacking_height = 40
+excluded_parameters = ["grid_layout", "split_model"]
+
+[[series]]
+name = "100C-G1"
+title = "Regular Boxes with Grid 1"
+model_name = "Regular Box %(unit_depth)d×%(unit_width)d with Grid 1"
+height = 44
+stacking_height = 40
+excluded_parameters = ["split_model"]
+
+[[series]]
+name = "100C-G2"
+title = "Regular Boxes with Grid 2"
+model_name = "Regular Box %(unit_depth)d×%(unit_width)d with Grid 2"
+height = 44
+stacking_height = 40
+excluded_parameters = ["split_model"]
+
+[[series]]
+name = "100C-G3"
+title = "Regular Boxes with Grid 3"
+model_name = "Regular Box %(unit_depth)d×%(unit_width)d with Grid 3"
+height = 44
+stacking_height = 40
+excluded_parameters = ["split_model"]
+
+[[series]]
+name = "100C-S"
+title = "Regular Split Boxes"
+model_name = "Regular Split Box %(unit_depth)d×%(unit_width)d"
+height = 44
+stacking_height = 40
+excluded_parameters = ["grid_layout"]
+
+[[series]]
+name = "200C"
+title = "Flat Boxes"
+model_name = "Flat Box %(unit_depth)d×%(unit_width)d"
+height = 24
+stacking_height = 20
+excluded_parameters = ["grid_layout", "split_model"]
+
+[[series]]
+name = "200C-G1"
+title = "Flat Boxes with Grid 1"
+model_name = "Flat Box %(unit_depth)d×%(unit_width)d with Grid 1"
+height = 24
+stacking_height = 20
+excluded_parameters = ["split_model"]
+
+[[series]]
+name = "200C-G2"
+title = "Flat Boxes with Grid 2"
+model_name = "Flat Box %(unit_depth)d×%(unit_width)d with Grid 2"
+height = 24
+stacking_height = 20
+excluded_parameters = ["split_model"]
+
+[[series]]
+name = "200C-G3"
+title = "Flat Boxes with Grid 3"
+model_name = "Flat Box %(unit_depth)d×%(unit_width)d with Grid 3"
+height = 24
+stacking_height = 20
+excluded_parameters = ["split_model"]
+
+[[series]]
+name = "200C-G4"
+title = "Flat Boxes with Grid 4"
+model_name = "Flat Box %(unit_depth)d×%(unit_width)d with Grid 4"
+height = 24
+stacking_height = 20
+excluded_parameters = ["split_model"]
+
+[[series]]
+name = "200C-G5"
+title = "Flat Boxes with Grid 5"
+model_name = "Flat Box %(unit_depth)d×%(unit_width)d with Grid 5"
+height = 24
+stacking_height = 20
+excluded_parameters = ["split_model"]
+
+[[series]]
+name = "200C-G6"
+title = "Flat Boxes with Grid 6"
+model_name = "Flat Box %(unit_depth)d×%(unit_width)d with Grid 6"
+height = 24
+stacking_height = 20
+excluded_parameters = ["split_model"]
+
+[[series]]
+name = "300C"
+title = "Tall Boxes"
+model_name = "Tall Box %(unit_depth)d×%(unit_width)d"
+height = 84
+stacking_height = 80
+excluded_parameters = ["grid_layout", "split_model"]
+
+[[series]]
+name = "300C-G1"
+title = "Tall Boxes width Grid 1"
+model_name = "Tall Box %(unit_depth)d×%(unit_width)d with Grid 1"
+height = 84
+stacking_height = 80
+
+[[series]]
+name = "300C-G2"
+title = "Tall Boxes width Grid 2"
+model_name = "Tall Box %(unit_depth)d×%(unit_width)d with Grid 2"
+height = 84
+stacking_height = 80
+excluded_parameters = ["split_model"]
+
+[[series]]
+name = "300C-G3"
+title = "Tall Boxes width Grid 3"
+model_name = "Tall Box %(unit_depth)d×%(unit_width)d with Grid 3"
+height = 84
+stacking_height = 80
+excluded_parameters = ["split_model"]
+
+[[series]]
+name = "300C-S"
+title = "Tall Split Boxes"
+model_name = "Tall Split Box %(unit_depth)d×%(unit_width)d"
+height = 84
+stacking_height = 80
+excluded_parameters = ["grid_layout"]
+
+[[series]]
+name = "400C"
+title = "Lids"
+model_name = "Lid %(unit_depth)d×%(unit_width)d"
+height = 9
+stacking_height = 5
+excluded_parameters = ["grid_layout", "split_model"]
+
+[[series]]
+name = "500C"
+title = "Triple Boxes"
+model_name = "Triple Box %(unit_depth)d×%(unit_width)d"
+height = 124
+stacking_height = 120
+excluded_parameters = ["grid_layout", "split_model"]
+
+[[series]]
+name = "600C"
+title = "Extended Boxes"
+model_name = "Extended Box %(unit_depth)d×%(unit_width)d"
+height = 64
+stacking_height = 60
+excluded_parameters = ["grid_layout", "split_model"]
+
+[[series]]
+name = "700D"
+title = "Classic Rail Grids"
+model_name = "Classic Rail Grid %(unit_depth)d×%(unit_width)d"
+height = 4
+stacking_height = 1
+excluded_parameters = ["grid_layout", "split_model", "stacking_height"]
+
+[[series]]
+name = "1400C"
+title = "Quad Boxes"
+model_name = "Quad Box %(unit_depth)d×%(unit_width)d"
+height = 164
+stacking_height = 160
+excluded_parameters = ["grid_layout", "split_model"]
+
+[[series]]
+name = "1600A"
+title = "Minimal Loose Rail Grids"
+model_name = "Minimal Loose Rail Grid %(unit_depth)d×%(unit_width)d"
+height = 4
+stacking_height = 1
+excluded_parameters = ["grid_layout", "split_model", "stacking_height"]
+
+[[series]]
+name = "1700A"
+title = "Minimal Tight Rail Grids"
+model_name = "Minimal Tight Rail Grid %(unit_depth)d×%(unit_width)d"
+height = 4
+stacking_height = 1
+excluded_parameters = ["grid_layout", "split_model", "stacking_height"]
+
+[[series]]
+name = "1800A"
+title = "Flat Loose Rail Grids"
+model_name = "Flat Loose Rail Grid %(unit_depth)d×%(unit_width)d"
+height = 3
+stacking_height = 0
+excluded_parameters = ["grid_layout", "split_model", "stacking_height"]
+
+[[series]]
+name = "1900A"
+title = "Flat Tight Rail Grids"
+model_name = "Flat Tight Rail Grid %(unit_depth)d×%(unit_width)d"
+height = 3
+stacking_height = 0
+excluded_parameters = ["grid_layout", "split_model", "stacking_height"]
+
