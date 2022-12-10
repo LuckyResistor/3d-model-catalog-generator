@@ -9,9 +9,10 @@ import json
 import logging
 import shutil
 import subprocess
+import tomllib
 from operator import itemgetter
 from pathlib import Path
-from typing import Optional, Union
+from typing import Optional, Union, Any, Literal
 from jinja2 import Environment, FileSystemLoader
 
 from lib.model import Model
@@ -84,14 +85,33 @@ class Data:
     """
     The data read from the CSV file.
     """
-    def __init__(self, json_data, project_dir: Path):
-        self.component_name = json_data['component_name']
+    def __init__(self, data: dict[str, Any], data_format: Literal["json", "toml"], project_dir: Path):
+        if data_format == 'json':
+            id_component_name = 'component_name'
+            id_parameter = 'parameter'
+            id_model = 'models'
+            id_parameter_title = 'title'
+            id_parameter_name = 'name'
+            id_parameter_unit = 'unit'
+        else:
+            id_component_name = 'component_name'
+            id_parameter = 'parameter'
+            id_model = 'model'
+            id_parameter_title = 'title'
+            id_parameter_name = 'name'
+            id_parameter_unit = 'unit'
+        self.component_name = data[id_component_name]
         self.parameter: dict[str, Parameter] = {}
-        for p in json_data['parameter']:
-            self.parameter[p['name']] = Parameter(p['title'], p['name'], p['unit'])
+        for parameter_data in data[id_parameter]:
+            new_parameter = Parameter(
+                parameter_data[id_parameter_title],
+                parameter_data[id_parameter_name],
+                parameter_data[id_parameter_unit])
+            self.parameter[new_parameter.name] = new_parameter
         self.models: list[Model] = []
-        for p in json_data['models']:
-            self.models.append(Model.from_json(p, project_dir))
+        for model_data in data[id_model]:
+            new_model = Model.from_data(model_data, data_format, project_dir)
+            self.models.append(new_model)
 
 
 class CatalogWorkingSet:
@@ -182,22 +202,31 @@ class CatalogWorkingSet:
                 self.model_files[file.name] = file
                 if self.verbose:
                     self.log.debug(f'  model {file.name}: {file}')
-            if file.name.endswith(('.jpg', '.jp2', '.png')):
+            if file.name.endswith(('.jpg', '.jp2', '.png', '.webp')):
                 self.image_files[file.name] = file
                 if self.verbose:
                     self.log.debug(f'  image {file.name}: {file}')
         self.log.info(f'done scanning. found {len(self.model_files)} model files and '
                       f'{len(self.image_files)} image files.')
 
-    def read_json(self):
+    def read_parameter_file(self):
         """
-        Read all values from the JSON file.
+        Read all values from the JSON or TOML file.
         """
         json_path = self.project_dir / 'parameters.json'
-        self.log.info(f'Reading data from: {json_path}')
-        text = json_path.read_text(encoding='utf-8')
-        json_data = json.loads(text)
-        self.data = Data(json_data, self.project_dir)
+        toml_path = self.project_dir / 'parameter.toml'
+        if toml_path.is_file():
+            self.log.info(f'Reading data from: {toml_path}')
+            text = toml_path.read_text(encoding='utf-8')
+            toml_data = tomllib.loads(text)
+            self.data = Data(toml_data, 'toml', self.project_dir)
+        elif json_path.is_file():
+            self.log.info(f'Reading data from: {json_path}')
+            text = json_path.read_text(encoding='utf-8')
+            json_data = json.loads(text)
+            self.data = Data(json_data, 'json', self.project_dir)
+        else:
+            raise ScriptError('Found no `parameter.json` or `parameter.toml` file.')
         self.log.info(f'done reading data')
 
     def read_configuration(self):
@@ -236,15 +265,17 @@ class CatalogWorkingSet:
         self.all_parameters = list(set(self.parameter_order).union(set(self.detail_order)))
 
         # Check the title and drawing images.
-        if self.title_image.endswith(('.jpg', '.jp2', '.png')):
+        if self.title_image.endswith(('.jpg', '.jp2', '.png', '.webp')):
             if self.title_image not in self.image_files:
                 raise ScriptError(f'Could not find specified title image `{self.title_image}`.')
             self.title_image_from_models = False
         else:
             possible_names = [
+                f'{self.title_image}-plain.webp',
                 f'{self.title_image}-plain.jp2',
                 f'{self.title_image}-plain.jpg',
                 f'{self.title_image}-plain.png',
+                f'{self.title_image}.webp',
                 f'{self.title_image}.jp2',
                 f'{self.title_image}.jpg',
                 f'{self.title_image}.png',
@@ -362,11 +393,10 @@ class CatalogWorkingSet:
             self.compressed_images[image_file] = target_path.relative_to(self.intermediate_path)
         self.log.info('done compressing images')
 
-    def generate_tables(self):
+    def _create_value_sets(self):
         """
-        Generate all tables for the output.
+        Generate value sets for each parameter.
         """
-        # Get the range for each value.
         value_sets: dict[str, set] = {}
         for parameter_name in self.parameter_order:
             value_sets[parameter_name] = set()
@@ -377,7 +407,15 @@ class CatalogWorkingSet:
             parameter = self.parameter_map[parameter_name]
             self.value_sets[parameter_name] = \
                 list([(v, parameter.format_value(v)) for v in sorted(list(value_sets[parameter_name]))])
-        # Create the main model groups
+
+    def _create_main_model_groups(self):
+        """
+        Create the main model groups.
+        """
+        if len(self.parameter_order) == 1:
+            # Special handling if there is only a single parameter, create a single group with no title.
+            self.model_groups.append(ModelGroup('', self.sorted_models))
+            return
         primary_group_parameters: list[Parameter] = list([self.parameter_map[g] for g in self.primary_group])
         if len(self.primary_group) == 1:
             primary_group_parameter = primary_group_parameters[0]
@@ -405,7 +443,10 @@ class CatalogWorkingSet:
                 self.model_groups.append(ModelGroup(title, models))
         else:
             raise ValueError('Not more than two parameters supported for primary group.')
-        # Create tables to find certain parameters
+
+    def _generate_parameter_tables(self):
+        if len(self.parameter_order) == 1:
+            return   # do not generate any parameter tables if there is only one parameter.
         for parameter_name in self.parameter_order:
             parameter = self.parameter_map[parameter_name]
             if len(self.value_sets[parameter_name]) < 2:
@@ -436,6 +477,14 @@ class CatalogWorkingSet:
                     rows.append(row)
                 tables.append(Table(sub_title, fields, rows))
             self.table_groups.append(TableGroup(title, tables))
+
+    def generate_tables(self):
+        """
+        Generate all tables for the output.
+        """
+        self._create_value_sets()
+        self._create_main_model_groups()
+        self._generate_parameter_tables()
 
     def write_latex_file(self, path: Path, template_name: str, label: str = ''):
         """
@@ -490,7 +539,7 @@ class CatalogWorkingSet:
             self.parse_arguments()
             self.init_logging()
             self.scan_files()
-            self.read_json()
+            self.read_parameter_file()
             self.read_configuration()
             self.process_models()
             self.compress_images()

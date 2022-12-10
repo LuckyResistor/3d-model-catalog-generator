@@ -39,9 +39,15 @@
 \begin{titlepage}
 \begin{center}
 \vspace*{15mm}
+\BLOCK{ if title|length > 10 }
+{\bfseries\fontsize{60}{70}\selectfont Catalog \par}
+\vspace*{5mm}
+{\bfseries\fontsize{40}{50}\selectfont \VAR{ title|escape_latex } \par}
+\BLOCK{ else }
 {\bfseries\fontsize{80}{90}\selectfont Catalog \par}
 \vspace*{5mm}
 {\bfseries\fontsize{60}{80}\selectfont \VAR{ title|escape_latex } \par}
+\BLOCK{ endif }
 \vspace*{1cm}
 \includegraphics[width=\columnwidth]{\VAR{ title_image }}
 \vspace*{1mm}

@@ -134,7 +134,7 @@ class SuperCatalogWorkingSet:
             ws.project_dir = self.project_dir / sub_project.name
             ws.intermediate_path = self.intermediate_path
             ws.scan_files()
-            ws.read_json()
+            ws.read_parameter_file()
             ws.read_configuration()
             ws.process_models()
             ws.compress_images()

@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import Union
+from typing import Union, Literal, Any
 
 
 class Model:
@@ -18,24 +18,35 @@ class Model:
         self.formatted_values: dict[str, str] = {}
 
     @staticmethod
-    def from_json(json_data, project_dir: Path) -> 'Model':
+    def from_data(data: dict[str, Any], data_format: Literal["json", "toml"], project_dir: Path) -> 'Model':
+        if data_format == 'json':
+            id_name = 'part_id'
+            id_title = 'title'
+            id_model_files = 'model_files'
+            id_image_files = 'image_files'
+            id_values = 'parameters'
+        else:
+            id_name = 'name'
+            id_title = 'title'
+            id_model_files = 'model_files'
+            id_image_files = 'image_files'
+            id_values = 'values'
         model = Model(
-            json_data['part_id'],
-            list([(project_dir / p) for p in json_data['model_files']]),
-            list([(project_dir / p) for p in json_data['image_files']]),
-            json_data['parameters'])
-        if 'title' in json_data:
-            model.title = json_data['title']
+            data[id_name],
+            list([(project_dir / p) for p in data[id_model_files]]),
+            list([(project_dir / p) for p in data[id_image_files]]),
+            data[id_values])
+        if id_title in data:
+            model.title = data[id_title]
         return model
 
     def to_json(self, project_dir: Path) -> dict:
-        values = {
-            "model_files": list([str(p.relative_to(project_dir)) for p in self.model_files]),
-            "image_files": list([str(p.relative_to(project_dir)) for p in self.image_files]),
-            "part_id": self.part_id,
-            "parameters": self.original_values
-        }
+        values = dict(
+            model_files=list([str(p.relative_to(project_dir)) for p in self.model_files]),
+            image_files=list([str(p.relative_to(project_dir)) for p in self.image_files]),
+            part_id=self.part_id,
+            parameters=self.original_values)
         if self.title:
-            values["title"] = self.title
+            values['title'] = self.title
         return values
 

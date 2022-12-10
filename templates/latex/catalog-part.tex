@@ -32,11 +32,13 @@
 
 \BLOCK{ for model_group in model_groups }
 \BLOCK{ if not loop.first }\pagebreak\BLOCK{ endif }
-\subsection{\VAR{ model_group.title|escape_latex }}
+\BLOCK{ if model_group.title }\subsection{\VAR{ model_group.title|escape_latex }}\BLOCK{ endif }
 
 \begin{multicols}{2}
 \BLOCK{ for model in model_group.models }
-\subsubsection{\BLOCK{if model.title}\VAR{model.title}\BLOCK{else}\VAR{model.part_id}\BLOCK{endif}}\hypertarget{\VAR{ model.part_id|escape_latex }}{}
+\BLOCK{ if model_group.title }\subsubsection\BLOCK{ else }\subsection\BLOCK{ endif }{
+    \BLOCK{if model.title}\VAR{model.title}\BLOCK{else}\VAR{model.part_id}\BLOCK{endif}}
+\hypertarget{\VAR{ model.part_id|escape_latex }}{}
 
 \begin{minipage}{\columnwidth}
 \footnotesize
