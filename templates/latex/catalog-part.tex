@@ -3,17 +3,27 @@
 \chapter{\VAR{ title|escape_latex }}\hypertarget{\VAR{label}}{}
 
 \begin{center}
-\includegraphics[width=\columnwidth]{\VAR{ title_image }}
+\includegraphics[width=\columnwidth]{\VAR{ compressed_images[title_image] }}
 \end{center}
 
 \section{Print Recommendations}
 
+\begin{center}
 \rowcolors{2}{row1}{row2}
 \begin{tabularx}{\columnwidth}{ l X }
     \rowcolor{black!60}\textcolor{white}{\textbf{Parameter}} & \textcolor{white}{\textbf{Recommendation}} \\
 \BLOCK{ for r in recommendations }\textbf{\VAR{ r[0]|escape_latex }} & \VAR{ r[1]|escape_latex } \\
 \BLOCK{ endfor }
 \end{tabularx}
+\end{center}
+
+\BLOCK{ if drawing_image }
+\section{Dimensions}
+
+\begin{center}
+\includegraphics[width=\columnwidth]{\VAR{ compressed_images[drawing_image] }}
+\end{center}
+\BLOCK{ endif }
 
 \vfill
 
@@ -22,15 +32,17 @@
 
 \BLOCK{ for model_group in model_groups }
 \BLOCK{ if not loop.first }\pagebreak\BLOCK{ endif }
-\subsection{\VAR{ model_group.title|escape_latex }}
+\BLOCK{ if model_group.title }\subsection{\VAR{ model_group.title|escape_latex }}\BLOCK{ endif }
 
 \begin{multicols}{2}
 \BLOCK{ for model in model_group.models }
-\subsubsection{\BLOCK{if model.title}\VAR{model.title}\BLOCK{else}\VAR{model.part_id}\BLOCK{endif}}\hypertarget{\VAR{ model.part_id|escape_latex }}{}
+\BLOCK{ if model_group.title }\subsubsection\BLOCK{ else }\subsection\BLOCK{ endif }{
+    \BLOCK{if model.title}\VAR{model.title}\BLOCK{else}\VAR{model.part_id}\BLOCK{endif}}
+\hypertarget{\VAR{ model.part_id|escape_latex }}{}
 
 \begin{minipage}{\columnwidth}
 \footnotesize
-\includegraphics[width=\columnwidth]{\VAR{ model.image_files[0] }}
+\includegraphics[width=\columnwidth]{\VAR{ compressed_images[model.image_files[0].name] }}
 
 \rowcolors{2}{row1}{row2}
 \begin{tabularx}{\columnwidth}{ l X }

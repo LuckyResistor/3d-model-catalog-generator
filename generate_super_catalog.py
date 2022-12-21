@@ -47,6 +47,7 @@ class SuperCatalogWorkingSet:
         self.title: str = ''
         self.title_image: Path = Path()
         self.catalog_pdf_name: str = ''
+        self.sub_catalog_latex: list[(Path, Path)] = []
         self.chapters: list[str] = []
 
     def parse_arguments(self):
@@ -115,7 +116,6 @@ class SuperCatalogWorkingSet:
             self.log.info(f'Converting: {self.title_image.name}...')
             args = [
                 'convert',
-                '-compress', 'jpeg2000',
                 '-quality', '50',
                 '-resize', '800x800',
                 str(self.title_image),
@@ -126,7 +126,7 @@ class SuperCatalogWorkingSet:
         self.log.info('done compressing image')
 
     def process_subprojects(self):
-        self.log.info('Procesing sub projects')
+        self.log.info('Processing sub projects')
         for sub_project in self.sub_projects:
             self.log.info(f'Processing {sub_project.name}')
             ws = CatalogWorkingSet()
@@ -134,16 +134,19 @@ class SuperCatalogWorkingSet:
             ws.project_dir = self.project_dir / sub_project.name
             ws.intermediate_path = self.intermediate_path
             ws.scan_files()
-            ws.read_json()
+            ws.read_parameter_file()
             ws.read_configuration()
-            ws.compress_images()
             ws.process_models()
+            ws.compress_images()
             ws.generate_tables()
             latex_path = self.intermediate_path / f'{sub_project.name}-catalog.tex'
+            ws.write_latex_file(latex_path, 'latex/catalog.tex', label=sub_project.name)
+            self.sub_catalog_latex.append((ws.project_dir, latex_path.relative_to(self.intermediate_path)))
+            latex_path = self.intermediate_path / f'{sub_project.name}-chapter.tex'
             ws.write_latex_file(latex_path, 'latex/catalog-part.tex', label=sub_project.name)
             self.chapters.append(str(latex_path.relative_to(self.intermediate_path)))
             sub_project.title = ws.title
-            sub_project.title_image = ws.title_image
+            sub_project.title_image = ws.compressed_images[ws.title_image]
         self.log.info('done processing sub projects')
 
     def write_latex_file(self, path: Path, template_name: str):
@@ -166,12 +169,18 @@ class SuperCatalogWorkingSet:
 
     def generate_pdf(self):
         """
-        Generate the LaTeX document.
+        Generate the PDFs from the documents.
         """
+        self.log.info(f'Generating super catalog PDF ...')
         tex_path = self.intermediate_path / f'{self.CATALOG_NAME}.tex'
         self.write_latex_file(tex_path, 'latex/super-catalog.tex')
         target_path = self.project_dir / self.catalog_pdf_name
         create_pdf_from_latex(tex_path, target_path, self.log)
+        for project_dir, latex_file in self.sub_catalog_latex:
+            self.log.info(f'Generating sub catalog PDF from: {latex_file}')
+            target_path = project_dir / latex_file.with_suffix('.pdf').name
+            tex_path = self.intermediate_path / latex_file.name
+            create_pdf_from_latex(tex_path, target_path, self.log)
 
     def run(self):
         try:
