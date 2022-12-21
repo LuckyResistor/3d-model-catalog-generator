@@ -45,9 +45,11 @@ class Parameter:
             formatted_value = eval(self.format_expression, {'value': value})
         else:
             if isinstance(value, float):
-                formatted_value = f'{value:.2} {self.unit}'
+                formatted_value = f'{value:.2}'
             else:
-                formatted_value = f'{value} {self.unit}'
+                formatted_value = f'{value}'
+            if self.unit and self.unit != 'None':
+                formatted_value += f' {self.unit}'
         return formatted_value
 
 
